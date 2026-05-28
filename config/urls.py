@@ -11,4 +11,5 @@ urlpatterns = [
     path("api/betting/", include("apps.betting.urls")),
     path("api/audit/", include("apps.audit.urls")),
     path("api/dashboard/", include("apps.dashboard.urls")),
+    path("api/responsible-gaming/", include("apps.responsible_gaming.urls")),
 ]
