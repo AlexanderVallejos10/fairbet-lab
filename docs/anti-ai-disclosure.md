@@ -7,9 +7,9 @@
 Usé IA como apoyo para:
 - entender errores;
 - ordenar ideas;
-- revisar opciones de estructura;
+- revisar estructura;
 - escribir borradores de documentación;
-- repasar la lógica de algunos archivos.
+- repasar lógica.
 
 ## Qué revisé yo mismo
 - modelos;
@@ -17,7 +17,8 @@ Usé IA como apoyo para:
 - apuestas;
 - auditoría;
 - juego responsable;
-- tests principales.
+- dashboard;
+- tests.
 
 ## Nota
 La IA me ayudó a ordenar y corregir.  

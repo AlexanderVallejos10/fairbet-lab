@@ -1,6 +1,6 @@
-# Boceto: máquina de estados de Bet
+# Boceto máquina de estados de Bet
 
-Dibujar estados:
+Dibujar a mano los estados:
 - pending
 - accepted
 - won
@@ -8,9 +8,4 @@ Dibujar estados:
 - cancelled
 - cashed_out
 
-Marcar flechas:
-- pending -> accepted
-- accepted -> won
-- accepted -> lost
-- accepted -> cancelled
-- accepted -> cashed_out
+Marcar las flechas entre estados.

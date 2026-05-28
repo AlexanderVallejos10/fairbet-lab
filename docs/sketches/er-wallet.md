@@ -1,6 +1,6 @@
-# Boceto: ER del wallet
+# Boceto ER del wallet
 
-Dibujar:
+Dibujar a mano:
 - User
 - UserProfile
 - WalletAccount
@@ -8,7 +8,7 @@ Dibujar:
 - LedgerEntry
 - IdempotencyKey
 
-Poner flechas entre:
+Relacionar:
 - User -> UserProfile
 - User -> WalletAccount
 - WalletAccount -> LedgerEntry
