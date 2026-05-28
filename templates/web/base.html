@@ -6,11 +6,17 @@
   <title>{% block title %}FairBet Lab{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 text-slate-900">
-  <header class="bg-slate-900 text-white">
+<body class="bg-slate-100 text-slate-900">
+
+  <div class="bg-amber-100 border-b border-amber-300 text-amber-900 text-sm px-4 py-2 text-center">
+    Juega con responsabilidad. Esta plataforma usa moneda virtual y no representa apuestas reales.
+  </div>
+
+  <header class="bg-slate-950 text-white">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
       <a href="/" class="font-bold text-xl">FairBet Lab</a>
       <nav class="space-x-4 text-sm">
+        <a href="/events/" class="hover:underline">Eventos</a>
         <a href="/wallet/" class="hover:underline">Wallet</a>
         <a href="/historial/" class="hover:underline">Historial</a>
         <a href="/perfil/" class="hover:underline">Perfil</a>
@@ -21,10 +27,24 @@
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-8">
+    {% if messages %}
+      <div class="space-y-2 mb-4">
+        {% for message in messages %}
+          <div class="rounded-lg px-4 py-3 text-sm
+            {% if message.tags == 'success' %}bg-emerald-100 text-emerald-900
+            {% elif message.tags == 'error' %}bg-red-100 text-red-900
+            {% elif message.tags == 'warning' %}bg-amber-100 text-amber-900
+            {% else %}bg-slate-200 text-slate-900{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="border-t bg-white">
+  <footer class="border-t bg-white mt-10">
     <div class="max-w-6xl mx-auto px-4 py-4 text-sm text-slate-500">
       Plataforma educativa con moneda virtual. No constituye una casa de apuestas.
     </div>

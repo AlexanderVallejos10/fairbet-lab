@@ -3,7 +3,10 @@ from django.db import transaction
 from rest_framework import serializers
 
 from .models import UserProfile
-from .validators import validate_adult_birth_date, validate_peruvian_dni
+from .validators import (
+    validate_adult_birth_date,
+    validate_document_number,
+)
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -12,7 +15,8 @@ class RegisterSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, min_length=6)
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
-    dni = serializers.CharField(max_length=8)
+    document_type = serializers.ChoiceField(choices=UserProfile.DocumentType.choices)
+    document_number = serializers.CharField(max_length=20)
     birth_date = serializers.DateField()
 
     def validate_username(self, value):
@@ -25,16 +29,13 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("Ese correo ya existe.")
         return value
 
-    def validate_dni(self, value):
-        value = validate_peruvian_dni(value)
-
-        if UserProfile.objects.filter(dni=value).exists():
-            raise serializers.ValidationError("Ese DNI ya está registrado.")
-
-        return value
-
-    def validate_birth_date(self, value):
-        return validate_adult_birth_date(value)
+    def validate(self, attrs):
+        attrs["document_number"] = validate_document_number(
+            attrs["document_type"],
+            attrs["document_number"],
+        )
+        attrs["birth_date"] = validate_adult_birth_date(attrs["birth_date"])
+        return attrs
 
     @transaction.atomic
     def create(self, validated_data):
@@ -48,7 +49,8 @@ class RegisterSerializer(serializers.Serializer):
 
         profile = UserProfile.objects.create(
             user=user,
-            dni=validated_data["dni"],
+            document_type=validated_data["document_type"],
+            document_number=validated_data["document_number"],
             birth_date=validated_data["birth_date"],
             kyc_status=UserProfile.KYCStatus.PENDING,
         )
@@ -70,7 +72,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "dni",
+            "document_type",
+            "document_number",
             "birth_date",
             "kyc_status",
             "created_at",

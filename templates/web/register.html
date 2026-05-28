@@ -1,8 +1,70 @@
 {% extends "web/base.html" %}
+
 {% block title %}Registro | FairBet Lab{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-2xl shadow p-6">
-  <h1 class="text-2xl font-bold mb-4">Registro</h1>
-  <p class="text-slate-600">Aquí va el formulario de registro con DNI y fecha de nacimiento.</p>
+<div class="max-w-2xl mx-auto bg-white rounded-2xl shadow p-6">
+  <h1 class="text-2xl font-bold mb-2">Registro</h1>
+  <p class="text-slate-600 mb-6">
+    Cuenta simple para probar el proyecto. Se pide documento, fecha de nacimiento y contraseña.
+  </p>
+
+  <form method="post" class="grid md:grid-cols-2 gap-4">
+    {% csrf_token %}
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Usuario</label>
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Correo</label>
+      {{ form.email }}
+      {{ form.email.errors }}
+    </div>
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Contraseña</label>
+      {{ form.password1 }}
+      {{ form.password1.errors }}
+    </div>
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Repetir contraseña</label>
+      {{ form.password2 }}
+      {{ form.password2.errors }}
+    </div>
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Tipo de documento</label>
+      {{ form.document_type }}
+      {{ form.document_type.errors }}
+    </div>
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Número de documento</label>
+      {{ form.document_number }}
+      {{ form.document_number.errors }}
+    </div>
+
+    <div class="md:col-span-1">
+      <label class="block text-sm font-medium mb-1">Fecha de nacimiento</label>
+      {{ form.birth_date }}
+      {{ form.birth_date.errors }}
+    </div>
+
+    <div class="md:col-span-2 mt-2">
+      <button type="submit" class="w-full bg-slate-900 text-white py-2 rounded-lg">
+        Crear cuenta
+      </button>
+    </div>
+
+    {% if form.non_field_errors %}
+      <div class="md:col-span-2 text-red-600 text-sm">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+  </form>
 </div>
 {% endblock %}

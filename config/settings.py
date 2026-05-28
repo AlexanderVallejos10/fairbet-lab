@@ -86,6 +86,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 CELERY_BROKER_URL = config("REDIS_URL", default="redis://redis:6379/0")
 CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://redis:6379/0")
 
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/"
+
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 

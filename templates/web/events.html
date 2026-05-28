@@ -1,0 +1,191 @@
+{% extends "web/base.html" %}
+
+{% block title %}Eventos | FairBet Lab{% endblock %}
+
+{% block content %}
+<div class="grid lg:grid-cols-3 gap-6">
+  <section class="lg:col-span-2 space-y-4">
+    <div class="bg-white rounded-2xl shadow p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-500">Partidos disponibles</p>
+          <h1 class="text-3xl font-bold mt-1">Eventos</h1>
+          <p class="text-slate-600 mt-2">
+            Selecciona una cuota para agregarla al cupón.
+          </p>
+        </div>
+        <a href="/" class="px-4 py-2 rounded-lg border border-slate-300 text-sm">
+          Volver
+        </a>
+      </div>
+    </div>
+
+    {% for event in events %}
+      <article class="bg-white rounded-2xl shadow p-5" data-event-id="{{ event.id }}">
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <div class="font-semibold text-lg">
+              {{ event.home_team }} vs {{ event.away_team }}
+            </div>
+            <div class="text-sm text-slate-500">
+              {{ event.start_at }}
+            </div>
+          </div>
+
+          <span class="text-xs px-3 py-1 rounded-full bg-slate-100">
+            {{ event.status }}
+          </span>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-3">
+          {% for odd in event.odds.all %}
+            <form method="post" action="{% url 'web:add_to_coupon' odd.id %}">
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="w-full border rounded-xl p-4 hover:bg-slate-50 transition text-left"
+              >
+                <div class="text-sm text-slate-500">
+                  {{ odd.get_selection_display }}
+                </div>
+                <div class="text-2xl font-bold">
+                  <span id="odd-value-{{ odd.id }}">{{ odd.decimal_odds }}</span>
+                </div>
+                <div id="odd-status-{{ odd.id }}" class="text-xs text-slate-400 mt-1">
+                  {% if odd.is_active %}Activa{% else %}Pausada{% endif %}
+                </div>
+              </button>
+            </form>
+          {% empty %}
+            <div class="sm:col-span-3 text-sm text-slate-500">
+              No hay cuotas cargadas para este evento.
+            </div>
+          {% endfor %}
+        </div>
+      </article>
+    {% empty %}
+      <div class="bg-white rounded-2xl shadow p-6 text-slate-500">
+        Todavía no hay eventos cargados.
+      </div>
+    {% endfor %}
+  </section>
+
+  <aside class="space-y-4">
+    <div class="bg-white rounded-2xl shadow p-5 sticky top-4">
+      <h2 class="text-xl font-semibold mb-3">Cupón</h2>
+      <p class="text-sm text-slate-500 mb-4">
+        Haz clic en una cuota para agregarla.
+      </p>
+
+      {% if coupon_items %}
+        <div class="space-y-3">
+          {% for item in coupon_items %}
+            <div class="border rounded-xl p-3">
+              <div class="font-medium">
+                {{ item.home_team }} vs {{ item.away_team }}
+              </div>
+              <div class="text-sm text-slate-500">
+                {{ item.selection }} · Cuota actual {{ item.current_odds }}
+              </div>
+              {% if item.changed %}
+                <div class="text-xs text-amber-600 mt-1">
+                  La cuota cambió desde que se agregó.
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="mt-4 border-t pt-4 flex items-center justify-between text-sm">
+          <span class="text-slate-500">Selecciones</span>
+          <span class="font-semibold">{{ coupon_items|length }}</span>
+        </div>
+
+        <div class="mt-2 flex items-center justify-between text-sm">
+          <span class="text-slate-500">Cuota total</span>
+          <span class="font-semibold">{{ coupon_total_odds }}</span>
+        </div>
+
+        {% if coupon_requires_reconfirm %}
+          <div class="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            Las cuotas cambiaron. Actualiza el cupón antes de apostar.
+          </div>
+
+          <form method="post" action="{% url 'web:sync_coupon' %}" class="mt-4">
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="w-full bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600"
+            >
+              Actualizar cupón
+            </button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'web:place_coupon_bet' %}" class="mt-4 space-y-3">
+            {% csrf_token %}
+            <div>
+              <label class="block text-sm font-medium mb-1">Monto</label>
+              <input
+                type="number"
+                name="stake"
+                step="0.0001"
+                min="1"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2"
+                placeholder="10.0000"
+              >
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700"
+            >
+              Apostar cupón
+            </button>
+          </form>
+        {% endif %}
+
+        <form method="post" action="{% url 'web:clear_coupon' %}" class="mt-3">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700"
+          >
+            Limpiar cupón
+          </button>
+        </form>
+      {% else %}
+        <div class="border rounded-xl p-3 text-sm text-slate-500">
+          Todavía no hay selecciones.
+        </div>
+
+        <a href="/" class="mt-4 inline-flex w-full justify-center bg-emerald-600 text-white py-2 rounded-lg">
+          Volver al inicio
+        </a>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+
+<script>
+  (function () {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+
+    document.querySelectorAll("[data-event-id]").forEach((card) => {
+      const eventId = card.dataset.eventId;
+      const socket = new WebSocket(
+        `${protocol}://${window.location.host}/ws/betting/events/${eventId}/`
+      );
+
+      socket.onmessage = (e) => {
+        const payload = JSON.parse(e.data);
+        if (payload.type !== "odds_update") return;
+
+        const oddValue = document.getElementById(`odd-value-${payload.odd_id}`);
+        if (oddValue) oddValue.textContent = payload.decimal_odds;
+
+        const oddStatus = document.getElementById(`odd-status-${payload.odd_id}`);
+        if (oddStatus) oddStatus.textContent = payload.is_active ? "Activa" : "Pausada";
+      };
+    });
+  })();
+</script>
+{% endblock %}

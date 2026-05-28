@@ -3,31 +3,82 @@
 {% block title %}Inicio | FairBet Lab{% endblock %}
 
 {% block content %}
-<div class="grid md:grid-cols-2 gap-6 items-center">
-  <section class="bg-white rounded-2xl shadow p-6">
-    <p class="text-sm text-slate-500 mb-2">Simulador educativo</p>
-    <h1 class="text-4xl font-bold mb-4">FairBet Lab</h1>
-    <p class="text-slate-700 mb-6">
-      Plataforma de apuestas deportivas con moneda virtual, hecha para demostrar wallet, apuestas, auditoría y juego responsable.
-    </p>
-    <div class="flex gap-3">
-      <a href="/register/" class="px-4 py-2 rounded-lg bg-slate-900 text-white">Registrarme</a>
-      <a href="/login/" class="px-4 py-2 rounded-lg border border-slate-300">Ingresar</a>
+<div class="grid lg:grid-cols-3 gap-6">
+  <section class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-2xl shadow p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-500">Simulador educativo</p>
+          <h1 class="text-4xl font-bold mt-1">FairBet Lab</h1>
+          <p class="text-slate-600 mt-3 max-w-xl">
+            Una versión simple de apuestas con moneda virtual, pensada para demostrar wallet, apuestas, auditoría y juego responsable.
+          </p>
+        </div>
+
+        <div class="hidden md:flex gap-2">
+          <a href="/login/" class="px-4 py-2 rounded-lg bg-slate-900 text-white">Login</a>
+          <a href="/register/" class="px-4 py-2 rounded-lg border border-slate-300">Registro</a>
+          <a href="/events/" class="px-4 py-2 rounded-lg border border-emerald-500 text-emerald-700">Ver eventos</a>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 mt-5 md:hidden">
+        <a href="/login/" class="px-4 py-2 rounded-lg bg-slate-900 text-white">Login</a>
+        <a href="/register/" class="px-4 py-2 rounded-lg border border-slate-300">Registro</a>
+        <a href="/events/" class="px-4 py-2 rounded-lg border border-emerald-500 text-emerald-700">Ver eventos</a>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-2xl shadow p-5">
+        <h2 class="font-semibold text-lg mb-1">Deportes</h2>
+        <p class="text-sm text-slate-500">Eventos simples con cuotas 1X2.</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-5">
+        <h2 class="font-semibold text-lg mb-1">Virtuales</h2>
+        <p class="text-sm text-slate-500">Resultados rápidos y fáciles de mostrar.</p>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-5">
+        <h2 class="font-semibold text-lg mb-1">Combinadas</h2>
+        <p class="text-sm text-slate-500">Para más adelante, cuando subamos lo avanzado.</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Próximos eventos</h2>
+        <span class="text-sm text-slate-500">Cuotas simples</span>
+      </div>
+
+      <div class="space-y-3">
+        {% for event in events %}
+          <div class="border rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <div class="font-medium">{{ event.home_team }} vs {{ event.away_team }}</div>
+              <div class="text-sm text-slate-500">{{ event.start_at }}</div>
+            </div>
+            <a href="/events/" class="px-3 py-2 rounded-lg bg-slate-100 text-sm">Ver cuotas</a>
+          </div>
+        {% empty %}
+          <p class="text-slate-500">Todavía no hay eventos cargados.</p>
+        {% endfor %}
+      </div>
     </div>
   </section>
 
-  <section class="bg-white rounded-2xl shadow p-6">
-    <h2 class="text-xl font-semibold mb-4">Próximos eventos</h2>
-    <div class="space-y-3">
-      {% for event in events %}
-        <div class="border rounded-xl p-4">
-          <div class="font-medium">{{ event.home_team }} vs {{ event.away_team }}</div>
-          <div class="text-sm text-slate-500">{{ event.start_at }}</div>
-        </div>
-      {% empty %}
-        <p class="text-slate-500">Todavía no hay eventos cargados.</p>
-      {% endfor %}
+  <aside class="space-y-4">
+    <div class="bg-white rounded-2xl shadow p-5 sticky top-4">
+      <h2 class="text-xl font-semibold mb-3">Cupón</h2>
+      <p class="text-sm text-slate-500 mb-4">Haz clic en una cuota para agregarla.</p>
+
+      <div class="border rounded-xl p-3 text-sm text-slate-500">
+        Todavía no hay selecciones.
+      </div>
+
+      <a href="/events/" class="mt-4 inline-flex w-full justify-center bg-emerald-600 text-white py-2 rounded-lg">
+        Ir a eventos
+      </a>
     </div>
-  </section>
+  </aside>
 </div>
 {% endblock %}

@@ -1,20 +1,25 @@
-from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .models import Bet, Event
+from .services import (
+    cash_out_bet,
+    place_combined_bet,
+    place_simple_bet,
+    settle_event,
+)
+from .models import Bet, CombinedBet, Event
 from .serializers import (
     BetSerializer,
+    CombinedBetSerializer,
     EventSerializer,
     PlaceBetSerializer,
+    PlaceCombinedBetSerializer,
     SettleEventSerializer,
 )
-from .services import place_simple_bet, settle_event
+from .services import place_combined_bet, place_simple_bet, settle_event
 
 
 class EventListView(APIView):
-    schema = AutoSchema()
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
@@ -23,7 +28,6 @@ class EventListView(APIView):
 
 
 class BetListView(APIView):
-    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -36,8 +40,19 @@ class BetListView(APIView):
         return Response(BetSerializer(bets, many=True).data)
 
 
+class CombinedBetListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        bets = (
+            CombinedBet.objects.filter(user=request.user)
+            .prefetch_related("selections__event", "selections__odd")
+            .order_by("-placed_at")
+        )
+        return Response(CombinedBetSerializer(bets, many=True).data)
+
+
 class PlaceBetView(APIView):
-    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -61,8 +76,30 @@ class PlaceBetView(APIView):
         )
 
 
+class PlaceCombinedBetView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PlaceCombinedBetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        combined_bet = place_combined_bet(
+            user=request.user,
+            odd_ids=serializer.validated_data["odd_ids"],
+            stake=serializer.validated_data["stake"],
+            idempotency_key=serializer.validated_data["idempotency_key"],
+        )
+
+        return Response(
+            {
+                "message": "Combinada creada correctamente.",
+                "combined_bet": CombinedBetSerializer(combined_bet).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class SettleEventView(APIView):
-    schema = AutoSchema()
     permission_classes = [permissions.IsAdminUser]
 
     def post(self, request, event_id):
@@ -77,4 +114,20 @@ class SettleEventView(APIView):
                 "message": "Evento liquidado correctamente.",
                 "event": EventSerializer(event).data,
             }
+        )
+    
+
+class CashOutBetView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, bet_id):
+        bet = Bet.objects.select_related("event", "odd", "user").get(pk=bet_id, user=request.user)
+        bet = cash_out_bet(bet)
+
+        return Response(
+            {
+                "message": "Cash-out realizado correctamente.",
+                "bet": BetSerializer(bet).data,
+            },
+            status=status.HTTP_200_OK,
         )
