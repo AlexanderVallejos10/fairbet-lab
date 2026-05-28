@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.responsible_gaming.apps.ResponsibleGamingConfig",
     "apps.audit.apps.AuditConfig",
     "apps.dashboard.apps.DashboardConfig",
+    "apps.web.apps.WebConfig",
 ]
 
 MIDDLEWARE = [
@@ -74,6 +75,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                "apps.web.context_processors.saldo_navbar",
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',

@@ -1,278 +1,378 @@
-from decimal import Decimal
 import uuid
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
-from django.db import transaction
-from django.db.models import Sum
-from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from apps.betting.models import Bet, Event, Odd
-from apps.betting.services import place_combined_bet
-from apps.responsible_gaming.services import get_or_create_deposit_limit
+from apps.betting.services import place_simple_bet
+from apps.responsible_gaming.models import DepositLimit, SelfExclusion
+from apps.responsible_gaming.services import (
+    get_or_create_deposit_limit,
+    lower_limits,
+    request_limit_increase,
+    self_exclude,
+)
 from apps.users.models import UserProfile
-from apps.web.forms import LoginForm, RegisterForm
-from apps.wallet.services import ensure_user_accounts
+from apps.wallet.models import LedgerEntry
+from apps.wallet.services import (
+    deposit_virtual_chips,
+    get_user_wallet_account,
+    ensure_user_accounts,
+    withdraw_virtual_chips,
+)
 
-User = get_user_model()
 
-
-def _build_coupon_data(request):
-    raw_coupon = request.session.get("coupon", [])
-    coupon_items = []
-    needs_reconfirm = False
-    total_odds = Decimal("1.0000")
-
-    for item in raw_coupon:
-        odd = Odd.objects.select_related("event").filter(pk=item.get("odd_id")).first()
-        if not odd:
-            continue
-
-        stored_odds = Decimal(str(item.get("odds", "1.0000")))
-        current_odds = odd.decimal_odds
-        changed = stored_odds != current_odds
-
-        if changed:
-            needs_reconfirm = True
-
-        coupon_items.append(
-            {
-                "odd_id": odd.id,
-                "home_team": odd.event.home_team,
-                "away_team": odd.event.away_team,
-                "selection": odd.get_selection_display(),
-                "stored_odds": stored_odds,
-                "current_odds": current_odds,
-                "changed": changed,
-            }
-        )
-        total_odds *= current_odds
-
-    total_odds = total_odds.quantize(Decimal("0.0001"))
-    request.session["coupon_requires_reconfirm"] = needs_reconfirm
-    request.session.modified = True
-
-    return coupon_items, total_odds, needs_reconfirm
+def _decimal_desde_post(valor):
+    try:
+        return Decimal(valor).quantize(Decimal("0.0001"))
+    except (InvalidOperation, TypeError):
+        raise ValueError("Monto invalido.")
 
 
 def home(request):
-    events = Event.objects.prefetch_related("odds").order_by("start_at")[:6]
-    return render(request, "web/home.html", {"events": events})
-
-
-def events_page(request):
-    events = Event.objects.prefetch_related("odds").order_by("start_at")
-    coupon_items, coupon_total_odds, coupon_requires_reconfirm = _build_coupon_data(request)
-
+    eventos_en_vivo = (
+        Event.objects.filter(status=Event.Status.EN_VIVO)
+        .prefetch_related("odds")
+        .order_by("-start_at")
+    )
+    eventos_programados = (
+        Event.objects.filter(status=Event.Status.PROGRAMADO)
+        .prefetch_related("odds")
+        .order_by("start_at")
+    )
     return render(
         request,
-        "web/events.html",
+        "betting/home.html",
         {
-            "events": events,
-            "coupon_items": coupon_items,
-            "coupon_total_odds": coupon_total_odds,
-            "coupon_requires_reconfirm": coupon_requires_reconfirm,
+            "eventos_en_vivo": eventos_en_vivo,
+            "eventos_programados": eventos_programados,
         },
     )
 
 
-def login_page(request):
-    if request.user.is_authenticated:
-        return redirect("/")
+def login_view(request):
+    if request.method == "POST":
+        correo = (request.POST.get("email") or "").strip()
+        contrasena = request.POST.get("password") or ""
+        usuario = authenticate(request, username=correo, password=contrasena)
+        if usuario:
+            login(request, usuario)
+            return redirect("web-home")
+        messages.error(request, "Credenciales invalidas.")
+    return render(request, "auth/login.html")
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("web-home")
+
+
+def register_view(request):
+    if request.method == "POST":
+        correo = (request.POST.get("email") or "").strip()
+        dni = (request.POST.get("dni") or "").strip()
+        fecha_nacimiento = request.POST.get("birth_date")
+        nombres = (request.POST.get("first_name") or "").strip()
+        apellidos = (request.POST.get("last_name") or "").strip()
+        contrasena = request.POST.get("password") or ""
+
+        errores = []
+
+        if not correo:
+            errores.append("El correo es obligatorio.")
+        if not dni:
+            errores.append("El DNI es obligatorio.")
+        if not fecha_nacimiento:
+            errores.append("La fecha de nacimiento es obligatoria.")
+        if not nombres:
+            errores.append("El nombre es obligatorio.")
+        if not apellidos:
+            errores.append("El apellido es obligatorio.")
+        if not contrasena:
+            errores.append("La contraseña es obligatoria.")
+
+        if errores:
+            return render(
+                request,
+                "auth/register.html",
+                {"errors": errores, "form": request.POST},
+            )
+
+        try:
+            fecha_nacimiento = timezone.datetime.fromisoformat(fecha_nacimiento).date()
+        except Exception:
+            return render(
+                request,
+                "auth/register.html",
+                {"errors": ["La fecha de nacimiento no es valida."], "form": request.POST},
+            )
+
+        if UserProfile.objects.filter(document_number=dni).exists():
+            return render(
+                request,
+                "auth/register.html",
+                {"errors": ["Ese DNI ya esta registrado."], "form": request.POST},
+            )
+
+        if UserProfile.objects.filter(user__username=correo).exists():
+            return render(
+                request,
+                "auth/register.html",
+                {"errors": ["Ese correo ya esta registrado."], "form": request.POST},
+            )
+
+        if not fecha_nacimiento:
+            return render(
+                request,
+                "auth/register.html",
+                {"errors": ["La fecha de nacimiento no es valida."], "form": request.POST},
+            )
+
+        usuario = UserProfile._meta.get_field("user").related_model.objects.create_user(
+            username=correo,
+            email=correo,
+            password=contrasena,
+            first_name=nombres,
+            last_name=apellidos,
+        )
+
+        UserProfile.objects.create(
+            user=usuario,
+            dni=dni,
+            birth_date=fecha_nacimiento,
+            kyc_status=UserProfile.KYCStatus.PENDING,
+        )
+
+        messages.success(request, "Cuenta creada correctamente.")
+        return redirect("web-login")
+
+    return render(request, "auth/register.html")
+
+
+@login_required(login_url="web-login")
+def bet_view(request, seleccion_id):
+    seleccion = get_object_or_404(Odd.objects.select_related("event"), pk=seleccion_id)
+    saldo = get_user_wallet_account(request.user).balance
 
     if request.method == "POST":
-        form = LoginForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect("/")
-    else:
-        form = LoginForm(request)
+        perfil = getattr(request.user, "profile", None)
+        if not perfil or perfil.kyc_status != UserProfile.KYCStatus.VERIFIED:
+            messages.error(request, "Tu cuenta debe estar verificada para apostar.")
+            return redirect("web-home")
 
-    return render(request, "web/login.html", {"form": form})
+        evento = seleccion.event
 
+        if evento.status not in [Event.Status.PROGRAMADO, Event.Status.EN_VIVO]:
+            messages.error(request, "El evento no está disponible para apuestas.")
+            return redirect("web-home")
 
-def register_page(request):
-    if request.user.is_authenticated:
-        return redirect("/")
+        if evento.status == Event.Status.PROGRAMADO and evento.start_at <= timezone.now():
+            messages.error(request, "El evento ya inició.")
+            return redirect("web-home")
 
-    if request.method == "POST":
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            with transaction.atomic():
-                user = User.objects.create_user(
-                    username=form.cleaned_data["username"],
-                    email=form.cleaned_data.get("email", ""),
-                    password=form.cleaned_data["password1"],
-                )
-                UserProfile.objects.create(
-                    user=user,
-                    document_type=form.cleaned_data["document_type"],
-                    document_number=form.cleaned_data["document_number"],
-                    birth_date=form.cleaned_data["birth_date"],
-                    kyc_status=UserProfile.KYCStatus.PENDING,
-                )
+        try:
+            monto = _decimal_desde_post(request.POST.get("stake"))
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return redirect("web-bet", seleccion_id=seleccion.id)
 
-            messages.success(request, "Registro creado. Ya puedes iniciar sesión.")
-            return redirect("web:login")
-    else:
-        form = RegisterForm()
-
-    return render(request, "web/register.html", {"form": form})
-
-
-@login_required
-def wallet_page(request):
-    accounts = ensure_user_accounts(request.user)
-    limits = get_or_create_deposit_limit(request.user)
+        try:
+            apuesta = place_simple_bet(
+                user=request.user,
+                odd=seleccion,
+                stake=monto,
+                idempotency_key=f"simple-{request.user.id}-{uuid.uuid4().hex[:12]}",
+            )
+            messages.success(request, "Apuesta registrada con moneda virtual.")
+            return redirect("web-historial")
+        except Exception as exc:
+            messages.error(request, str(exc))
 
     return render(
         request,
-        "web/wallet.html",
+        "betting/bet.html",
+        {"seleccion": seleccion, "saldo": saldo},
+    )
+
+
+@login_required(login_url="web-login")
+def wallet_view(request):
+    cuenta_wallet = get_user_wallet_account(request.user)
+
+    if request.method == "POST":
+        accion = request.POST.get("action")
+        try:
+            monto = _decimal_desde_post(request.POST.get("amount"))
+            if accion == "deposit":
+                perfil = getattr(request.user, "profile", None)
+                if not perfil or perfil.kyc_status != UserProfile.KYCStatus.VERIFIED:
+                    raise ValueError("Tu cuenta debe estar verificada para realizar depositos.")
+
+                mapa_limites = {
+                    "deposit_limit_daily": "diario",
+                    "deposit_limit_weekly": "semanal",
+                    "deposit_limit_monthly": "mensual",
+                }
+                for campo, etiqueta in mapa_limites.items():
+                    limite = getattr(request.user, campo, None)
+                    if limite is not None and monto > limite:
+                        raise ValueError(f"El monto supera tu limite {etiqueta} de deposito ({limite}).")
+
+                deposit_virtual_chips(
+                    request.user,
+                    monto,
+                    idempotency_key=f"deposit-{request.user.id}-{uuid.uuid4().hex[:12]}",
+                )
+                messages.success(request, "Deposito virtual realizado correctamente.")
+
+            elif accion == "withdraw":
+                withdraw_virtual_chips(
+                    request.user,
+                    monto,
+                    idempotency_key=f"withdraw-{request.user.id}-{uuid.uuid4().hex[:12]}",
+                )
+                messages.success(request, "Retiro virtual realizado correctamente.")
+
+            return redirect("web-wallet")
+
+        except Exception as exc:
+            messages.error(request, str(exc))
+
+    entradas = LedgerEntry.objects.filter(account=cuenta_wallet).order_by("-created_at")[:10]
+    return render(
+        request,
+        "wallet/wallet.html",
         {
-            "wallet_balance": accounts["wallet_usuario"].balance,
-            "pending_balance": accounts["apuestas_pendientes"].balance,
-            "bonus_balance": accounts["bonos"].balance,
-            "limits": limits,
+            "balance": cuenta_wallet.balance,
+            "entries": entradas,
         },
     )
 
 
-@login_required
-def profile_page(request):
-    return render(request, "web/profile.html")
+@login_required(login_url="web-login")
+def historial_view(request):
+    apuestas = Bet.objects.filter(user=request.user).select_related("odd", "event").order_by("-placed_at")
+    won_count = apuestas.filter(status=Bet.Status.WON).count()
+    lost_count = apuestas.filter(status=Bet.Status.LOST).count()
+    pending_count = apuestas.filter(status=Bet.Status.ACCEPTED).count()
 
-
-@login_required
-def history_page(request):
-    bets = (
-        Bet.objects.filter(user=request.user)
-        .select_related("event", "odd")
-        .order_by("-placed_at")[:20]
-    )
-    return render(request, "web/history.html", {"bets": bets})
-
-
-@login_required
-def dashboard_page(request):
-    if not request.user.is_staff:
-        return HttpResponseForbidden("No autorizado.")
-
-    totals = Bet.objects.aggregate(total_staked=Sum("stake"), total_paid=Sum("payout"))
-    total_staked = totals["total_staked"] or Decimal("0.0000")
-    total_paid = totals["total_paid"] or Decimal("0.0000")
-
-    context = {
-        "total_apostado": total_staked,
-        "total_pagado": total_paid,
-        "ggr": total_staked - total_paid,
-        "cantidad_usuarios": User.objects.count(),
-        "cantidad_apuestas": Bet.objects.count(),
-        "cantidad_eventos": Event.objects.count(),
-    }
-    return render(request, "web/dashboard.html", context)
-
-
-def add_to_coupon(request, odd_id):
-    odd = get_object_or_404(Odd, pk=odd_id)
-    coupon = request.session.get("coupon", [])
-
-    if any(item.get("odd_id") == odd.id for item in coupon):
-        messages.info(request, "Esa selección ya está en el cupón.")
-        return redirect("web:events")
-
-    coupon.append(
-        {
-            "odd_id": odd.id,
-            "home_team": odd.event.home_team,
-            "away_team": odd.event.away_team,
-            "selection": odd.get_selection_display(),
-            "odds": str(odd.decimal_odds),
-        }
-    )
-
-    request.session["coupon"] = coupon
-    request.session["coupon_requires_reconfirm"] = False
-    request.session.modified = True
-
-    return redirect("web:events")
-
-
-def sync_coupon(request):
-    if request.method != "POST":
-        return redirect("web:events")
-
-    raw_coupon = request.session.get("coupon", [])
-    refreshed = []
-
-    for item in raw_coupon:
-        odd = Odd.objects.select_related("event").filter(pk=item.get("odd_id")).first()
-        if not odd:
-            continue
-
-        refreshed.append(
+    listado = []
+    for apuesta in apuestas[:20]:
+        payout = None
+        if apuesta.status == Bet.Status.WON:
+            payout = (apuesta.stake * apuesta.odds_snapshot) - apuesta.stake
+        listado.append(
             {
-                "odd_id": odd.id,
-                "home_team": odd.event.home_team,
-                "away_team": odd.event.away_team,
-                "selection": odd.get_selection_display(),
-                "odds": str(odd.decimal_odds),
+                "id": apuesta.id,
+                "event": apuesta.event,
+                "odd": apuesta.odd,
+                "stake": apuesta.stake,
+                "odds": apuesta.odds_snapshot,
+                "status": apuesta.status,
+                "placed_at": apuesta.placed_at,
+                "payout": payout,
             }
         )
 
-    request.session["coupon"] = refreshed
-    request.session["coupon_requires_reconfirm"] = False
-    request.session.modified = True
-
-    messages.success(request, "Cupón actualizado con las nuevas cuotas.")
-    return redirect("web:events")
-
-
-def clear_coupon(request):
-    request.session["coupon"] = []
-    request.session["coupon_requires_reconfirm"] = False
-    request.session.modified = True
-    return redirect("web:events")
+    return render(
+        request,
+        "betting/historial.html",
+        {
+            "bets": listado,
+            "won_count": won_count,
+            "lost_count": lost_count,
+            "pending_count": pending_count,
+        },
+    )
 
 
-@login_required
-def place_coupon_bet(request):
-    if request.method != "POST":
-        return redirect("web:events")
+@login_required(login_url="web-login")
+def dashboard_view(request):
+    if not request.user.is_staff:
+        return redirect("web-login")
 
-    if request.session.get("coupon_requires_reconfirm"):
-        messages.error(request, "Las cuotas cambiaron. Actualiza el cupón antes de apostar.")
-        return redirect("web:events")
+    total_apostado = sum(
+        [bet.stake for bet in Bet.objects.all()],
+        Decimal("0.0000"),
+    )
+    total_pagado = sum(
+        [bet.payout for bet in Bet.objects.all()],
+        Decimal("0.0000"),
+    )
 
-    coupon = request.session.get("coupon", [])
-    if len(coupon) < 2:
-        messages.error(request, "El cupón necesita al menos 2 selecciones.")
-        return redirect("web:events")
+    eventos = Event.objects.filter(
+        status__in=[Event.Status.PROGRAMADO, Event.Status.EN_VIVO]
+    ).prefetch_related("odds")
 
-    odd_ids = [item["odd_id"] for item in coupon]
-    stake = request.POST.get("stake", "").strip()
+    return render(
+        request,
+        "dashboard/dashboard.html",
+        {
+            "metrics": {
+                "ggr": total_apostado - total_pagado,
+                "total_bets": Bet.objects.count(),
+                "active_users": Bet.objects.values("user").distinct().count(),
+            },
+            "events": eventos,
+        },
+    )
 
-    if not stake:
-        messages.error(request, "Debes indicar un monto.")
-        return redirect("web:events")
 
-    try:
-        combined_bet = place_combined_bet(
-            user=request.user,
-            odd_ids=odd_ids,
-            stake=stake,
-            idempotency_key=f"coupon-{request.user.id}-{uuid.uuid4().hex[:12]}",
-        )
-    except ValidationError as exc:
-        messages.error(request, " ".join(exc.messages))
-        return redirect("web:events")
+@login_required(login_url="web-login")
+def perfil_view(request):
+    if request.method == "POST":
+        accion = request.POST.get("action")
 
-    request.session["coupon"] = []
-    request.session["coupon_requires_reconfirm"] = False
-    request.session.modified = True
+        if accion == "limits":
+            campo = request.POST.get("field_name")
+            nuevo_valor = request.POST.get("new_value")
 
-    messages.success(request, f"Combinada creada: cuota {combined_bet.odds_snapshot}")
-    return redirect("web:historial")
+            try:
+                nuevo_valor = _decimal_desde_post(nuevo_valor)
+                limite_actual = get_or_create_deposit_limit(request.user)
+
+                if campo == "deposit_limit_daily":
+                    if limite_actual.daily_limit is not None and nuevo_valor < limite_actual.daily_limit:
+                        lower_limits(request.user, daily=nuevo_valor)
+                    else:
+                        request_limit_increase(request.user, daily=nuevo_valor)
+                elif campo == "deposit_limit_weekly":
+                    if limite_actual.weekly_limit is not None and nuevo_valor < limite_actual.weekly_limit:
+                        lower_limits(request.user, weekly=nuevo_valor)
+                    else:
+                        request_limit_increase(request.user, weekly=nuevo_valor)
+                elif campo == "deposit_limit_monthly":
+                    if limite_actual.monthly_limit is not None and nuevo_valor < limite_actual.monthly_limit:
+                        lower_limits(request.user, monthly=nuevo_valor)
+                    else:
+                        request_limit_increase(request.user, monthly=nuevo_valor)
+
+                messages.success(request, "Limite actualizado.")
+                return redirect("web-perfil")
+            except Exception as exc:
+                messages.error(request, str(exc))
+
+        elif accion == "self_exclusion":
+            if request.POST.get("confirm") != "on":
+                messages.error(request, "Debes confirmar explicitamente la autoexclusion.")
+            else:
+                try:
+                    self_exclude(request.user, request.POST.get("exclusion_type"))
+                    messages.success(request, "Autoexclusion registrada.")
+                    return redirect("web-perfil")
+                except Exception as exc:
+                    messages.error(request, str(exc))
+
+    return render(
+        request,
+        "auth/perfil.html",
+        {
+            "exclusion_types": SelfExclusion.Duration.choices,
+            "perfil": getattr(request.user, "profile", None),
+            "limite": get_or_create_deposit_limit(request.user),
+        },
+    )

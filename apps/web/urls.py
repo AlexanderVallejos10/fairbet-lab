@@ -1,33 +1,15 @@
 from django.urls import path
 
-from .views import (
-    add_to_coupon,
-    clear_coupon,
-    dashboard_page,
-    events_page,
-    home,
-    history_page,
-    login_page,
-    place_coupon_bet,
-    profile_page,
-    register_page,
-    sync_coupon,
-    wallet_page,
-)
-
-app_name = "web"
+from apps.web import views
 
 urlpatterns = [
-    path("", home, name="home"),
-    path("events/", events_page, name="events"),
-    path("events/add/<int:odd_id>/", add_to_coupon, name="add_to_coupon"),
-    path("events/sync/", sync_coupon, name="sync_coupon"),
-    path("events/place/", place_coupon_bet, name="place_coupon_bet"),
-    path("events/clear/", clear_coupon, name="clear_coupon"),
-    path("login/", login_page, name="login"),
-    path("register/", register_page, name="register"),
-    path("wallet/", wallet_page, name="wallet"),
-    path("historial/", history_page, name="history"),
-    path("perfil/", profile_page, name="profile"),
-    path("dashboard/", dashboard_page, name="dashboard"),
+    path("", views.home, name="web-home"),
+    path("login/", views.login_view, name="web-login"),
+    path("logout/", views.logout_view, name="web-logout"),
+    path("register/", views.register_view, name="web-register"),
+    path("bet/<int:seleccion_id>/", views.bet_view, name="web-bet"),
+    path("wallet/", views.wallet_view, name="web-wallet"),
+    path("historial/", views.historial_view, name="web-historial"),
+    path("dashboard/", views.dashboard_view, name="web-dashboard"),
+    path("perfil/", views.perfil_view, name="web-perfil"),
 ]
