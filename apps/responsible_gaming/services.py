@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from apps.users.models import UserProfile
 from .models import DepositLimit, SelfExclusion
 
 
@@ -70,7 +71,10 @@ def activate_pending_limits(user):
 
 
 def self_exclude(user, duration: str):
-    obj, _ = SelfExclusion.objects.get_or_create(user=user, defaults={"duration": duration})
+    obj, _ = SelfExclusion.objects.get_or_create(
+        user=user,
+        defaults={"duration": duration},
+    )
 
     obj.duration = duration
     obj.active = True
@@ -85,6 +89,12 @@ def self_exclude(user, duration: str):
         obj.ends_at = None
 
     obj.save()
+
+    profile = UserProfile.objects.filter(user=user).first()
+    if profile:
+        profile.kyc_status = UserProfile.KYCStatus.SELF_EXCLUDED
+        profile.save(update_fields=["kyc_status"])
+
     return obj
 
 

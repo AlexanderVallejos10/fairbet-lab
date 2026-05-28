@@ -34,11 +34,11 @@ def _validate_user_can_bet(user):
     if not profile:
         raise ValidationError("El usuario no tiene perfil KYC.")
 
-    if profile.kyc_status != UserProfile.KYCStatus.VERIFIED:
-        raise ValidationError("El usuario debe estar verificado para apostar.")
-
     if profile.kyc_status == UserProfile.KYCStatus.SELF_EXCLUDED:
         raise ValidationError("El usuario está autoexcluido.")
+
+    if profile.kyc_status != UserProfile.KYCStatus.VERIFIED:
+        raise ValidationError("El usuario debe estar verificado para apostar.")
 
     return profile
 
