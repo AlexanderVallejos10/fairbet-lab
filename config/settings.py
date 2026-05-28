@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "channels",
+    "apps.web.apps.WebConfig",
     "apps.users.apps.UsersConfig",
     "apps.wallet.apps.WalletConfig",
     "apps.betting.apps.BettingConfig",
@@ -69,7 +70,7 @@ REST_FRAMEWORK = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

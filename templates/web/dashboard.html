@@ -1,0 +1,18 @@
+{% extends "web/base.html" %}
+{% block title %}Dashboard | FairBet Lab{% endblock %}
+{% block content %}
+<div class="grid md:grid-cols-3 gap-4">
+  <div class="bg-white rounded-2xl shadow p-5">
+    <p class="text-sm text-slate-500">Total apostado</p>
+    <div class="text-3xl font-bold">{{ total_apostado }}</div>
+  </div>
+  <div class="bg-white rounded-2xl shadow p-5">
+    <p class="text-sm text-slate-500">Total pagado</p>
+    <div class="text-3xl font-bold">{{ total_pagado }}</div>
+  </div>
+  <div class="bg-white rounded-2xl shadow p-5">
+    <p class="text-sm text-slate-500">GGR</p>
+    <div class="text-3xl font-bold">{{ ggr }}</div>
+  </div>
+</div>
+{% endblock %}

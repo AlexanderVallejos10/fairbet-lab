@@ -1,0 +1,18 @@
+{% extends "web/base.html" %}
+{% block title %}Wallet | FairBet Lab{% endblock %}
+{% block content %}
+<div class="grid md:grid-cols-3 gap-4">
+  <div class="bg-white rounded-2xl shadow p-5">
+    <p class="text-sm text-slate-500">Wallet usuario</p>
+    <div class="text-3xl font-bold">{{ wallet_balance }}</div>
+  </div>
+  <div class="bg-white rounded-2xl shadow p-5">
+    <p class="text-sm text-slate-500">Apuestas pendientes</p>
+    <div class="text-3xl font-bold">{{ pending_balance }}</div>
+  </div>
+  <div class="bg-white rounded-2xl shadow p-5">
+    <p class="text-sm text-slate-500">Bonos</p>
+    <div class="text-3xl font-bold">{{ bonus_balance }}</div>
+  </div>
+</div>
+{% endblock %}

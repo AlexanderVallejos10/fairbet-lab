@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FairBet Lab{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="font-bold text-xl">FairBet Lab</a>
+      <nav class="space-x-4 text-sm">
+        <a href="/wallet/" class="hover:underline">Wallet</a>
+        <a href="/historial/" class="hover:underline">Historial</a>
+        <a href="/perfil/" class="hover:underline">Perfil</a>
+        <a href="/dashboard/" class="hover:underline">Dashboard</a>
+        <a href="/api/docs/" class="hover:underline">API</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-4 text-sm text-slate-500">
+      Plataforma educativa con moneda virtual. No constituye una casa de apuestas.
+    </div>
+  </footer>
+</body>
+</html>

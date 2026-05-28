@@ -1,0 +1,17 @@
+{% extends "web/base.html" %}
+{% block title %}Historial | FairBet Lab{% endblock %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow p-6">
+  <h1 class="text-2xl font-bold mb-4">Historial de apuestas</h1>
+  <div class="space-y-3">
+    {% for bet in bets %}
+      <div class="border rounded-xl p-4">
+        <div class="font-medium">{{ bet.event.home_team }} vs {{ bet.event.away_team }}</div>
+        <div class="text-sm text-slate-500">{{ bet.selection }} · {{ bet.stake }} · {{ bet.status }}</div>
+      </div>
+    {% empty %}
+      <p class="text-slate-500">No hay apuestas todavía.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
