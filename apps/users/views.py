@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +9,7 @@ from .serializers import RegisterSerializer, UserProfileSerializer
 
 
 class RegisterView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
@@ -26,6 +28,7 @@ class RegisterView(APIView):
 
 
 class MyProfileView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):

@@ -1,3 +1,4 @@
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +15,7 @@ from .services import (
 
 
 class DepositLimitView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -54,6 +56,7 @@ class DepositLimitView(APIView):
 
 
 class SelfExclusionView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):

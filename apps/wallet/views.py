@@ -1,3 +1,4 @@
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +13,7 @@ from .services import (
 
 
 class WalletSummaryView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -29,6 +31,7 @@ class WalletSummaryView(APIView):
 
 
 class DepositView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -51,6 +54,7 @@ class DepositView(APIView):
 
 
 class WithdrawView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):

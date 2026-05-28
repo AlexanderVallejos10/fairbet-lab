@@ -1,3 +1,4 @@
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +9,7 @@ from .services import append_audit_log, verify_audit_chain
 
 
 class AuditLogListView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
@@ -16,6 +18,7 @@ class AuditLogListView(APIView):
 
 
 class AuditCreateView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAdminUser]
 
     def post(self, request):
@@ -32,6 +35,7 @@ class AuditCreateView(APIView):
 
 
 class AuditVerifyView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):

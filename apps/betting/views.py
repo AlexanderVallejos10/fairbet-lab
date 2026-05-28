@@ -1,3 +1,4 @@
+from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +14,7 @@ from .services import place_simple_bet, settle_event
 
 
 class EventListView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
@@ -21,6 +23,7 @@ class EventListView(APIView):
 
 
 class BetListView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -34,6 +37,7 @@ class BetListView(APIView):
 
 
 class PlaceBetView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -58,6 +62,7 @@ class PlaceBetView(APIView):
 
 
 class SettleEventView(APIView):
+    schema = AutoSchema()
     permission_classes = [permissions.IsAdminUser]
 
     def post(self, request, event_id):

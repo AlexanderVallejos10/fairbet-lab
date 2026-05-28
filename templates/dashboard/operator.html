@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard operador{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="text-muted mb-1">Total apostado</p>
+        <h3 class="mb-0">{{ total_apostado }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="text-muted mb-1">Total pagado</p>
+        <h3 class="mb-0">{{ total_pagado }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="text-muted mb-1">GGR</p>
+        <h3 class="mb-0">{{ ggr }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="text-muted mb-1">Cantidad de usuarios</p>
+        <h3 class="mb-0">{{ cantidad_usuarios }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="text-muted mb-1">Cantidad de apuestas</p>
+        <h3 class="mb-0">{{ cantidad_apuestas }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
