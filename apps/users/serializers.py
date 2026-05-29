@@ -1,82 +1,68 @@
-from django.contrib.auth.models import User
-from django.db import transaction
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import UserProfile
-from .validators import (
-    validate_adult_birth_date,
-    validate_document_number,
-)
+from .models import PerfilUsuario
+from .validators import validar_dni_peruano, validar_fecha_mayoria_edad
+
+User = get_user_model()
 
 
-class RegisterSerializer(serializers.Serializer):
+class RegistroSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
-    email = serializers.EmailField(required=False, allow_blank=True)
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=6)
     first_name = serializers.CharField(required=False, allow_blank=True)
     last_name = serializers.CharField(required=False, allow_blank=True)
-    document_type = serializers.ChoiceField(choices=UserProfile.DocumentType.choices)
-    document_number = serializers.CharField(max_length=20)
-    birth_date = serializers.DateField()
+    dni = serializers.CharField(max_length=8)
+    fecha_nacimiento = serializers.DateField()
 
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
+    def validate_username(self, valor):
+        if User.objects.filter(username=valor).exists():
             raise serializers.ValidationError("Ese usuario ya existe.")
-        return value
+        return valor
 
-    def validate_email(self, value):
-        if value and User.objects.filter(email=value).exists():
+    def validate_email(self, valor):
+        if User.objects.filter(email=valor).exists():
             raise serializers.ValidationError("Ese correo ya existe.")
-        return value
+        return valor
 
     def validate(self, attrs):
-        attrs["document_number"] = validate_document_number(
-            attrs["document_type"],
-            attrs["document_number"],
-        )
-        attrs["birth_date"] = validate_adult_birth_date(attrs["birth_date"])
+        attrs["dni"] = validar_dni_peruano(attrs["dni"])
+        attrs["fecha_nacimiento"] = validar_fecha_mayoria_edad(attrs["fecha_nacimiento"])
         return attrs
 
-    @transaction.atomic
     def create(self, validated_data):
-        user = User.objects.create_user(
+        usuario = User.objects.create_user(
             username=validated_data["username"],
-            email=validated_data.get("email", ""),
+            email=validated_data["email"],
             password=validated_data["password"],
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", ""),
         )
 
-        profile = UserProfile.objects.create(
-            user=user,
-            document_type=validated_data["document_type"],
-            document_number=validated_data["document_number"],
-            birth_date=validated_data["birth_date"],
-            kyc_status=UserProfile.KYCStatus.PENDING,
+        perfil = PerfilUsuario.objects.create(
+            user=usuario,
+            dni=validated_data["dni"],
+            fecha_nacimiento=validated_data["fecha_nacimiento"],
+            estado_kyc="pendiente_verificacion",
         )
+        return perfil
 
-        return profile
 
-
-class UserProfileSerializer(serializers.ModelSerializer):
+class PerfilUsuarioSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
-    first_name = serializers.CharField(source="user.first_name", read_only=True)
-    last_name = serializers.CharField(source="user.last_name", read_only=True)
 
     class Meta:
-        model = UserProfile
+        model = PerfilUsuario
         fields = (
             "id",
             "username",
             "email",
-            "first_name",
-            "last_name",
-            "document_type",
-            "document_number",
-            "birth_date",
-            "kyc_status",
-            "created_at",
-            "updated_at",
+            "dni",
+            "fecha_nacimiento",
+            "estado_kyc",
+            "creado_en",
+            "actualizado_en",
         )
         read_only_fields = fields

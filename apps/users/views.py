@@ -1,36 +1,35 @@
-from django.shortcuts import get_object_or_404
-from drf_spectacular.openapi import AutoSchema
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import UserProfile
-from .serializers import RegisterSerializer, UserProfileSerializer
+from .models import PerfilUsuario
+from .serializers import PerfilUsuarioSerializer, RegistroSerializer
 
 
-class RegisterView(APIView):
-    schema = AutoSchema()
+class RegistroView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = RegistroSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        profile = serializer.save()
-
+        perfil = serializer.save()
         return Response(
             {
                 "message": "Usuario registrado correctamente.",
-                "profile": UserProfileSerializer(profile).data,
+                "perfil": PerfilUsuarioSerializer(perfil).data,
             },
             status=status.HTTP_201_CREATED,
         )
 
 
-class MyProfileView(APIView):
-    schema = AutoSchema()
+class PerfilActualView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        profile = get_object_or_404(UserProfile, user=request.user)
-        return Response(UserProfileSerializer(profile).data)
+        perfil = getattr(request.user, "perfil", None)
+        if not perfil:
+            return Response(
+                {"message": "El usuario no tiene perfil."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(PerfilUsuarioSerializer(perfil).data)

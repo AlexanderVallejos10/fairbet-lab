@@ -1,56 +1,38 @@
-from datetime import date
-
 from django.conf import settings
 from django.db import models
 
+from .choices import EstadoKYC
 
-class UserProfile(models.Model):
-    class DocumentType(models.TextChoices):
-        DNI = "dni", "DNI"
-        CE = "ce", "Carnet de extranjería"
-        PASSPORT = "pasaporte", "Pasaporte"
 
-    class KYCStatus(models.TextChoices):
-        PENDING = "pendiente_verificacion", "Pendiente de verificación"
-        VERIFIED = "verificado", "Verificado"
-        BLOCKED = "bloqueado", "Bloqueado"
-        SELF_EXCLUDED = "autoexcluido", "Autoexcluido"
-
+class PerfilUsuario(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="profile",
+        related_name="perfil",
     )
-    document_type = models.CharField(
-        max_length=20,
-        choices=DocumentType.choices,
-        default=DocumentType.DNI,
-    )
-    document_number = models.CharField(max_length=20)
-    birth_date = models.DateField()
-    kyc_status = models.CharField(
+    dni = models.CharField(max_length=8, unique=True)
+    fecha_nacimiento = models.DateField()
+    estado_kyc = models.CharField(
         max_length=32,
-        choices=KYCStatus.choices,
-        default=KYCStatus.PENDING,
+        choices=EstadoKYC.choices,
+        default=EstadoKYC.PENDIENTE,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["document_type", "document_number"],
-                name="uniq_user_profile_document",
-            )
-        ]
+        verbose_name = "perfil de usuario"
+        verbose_name_plural = "perfiles de usuario"
+
+    def __str__(self):
+        return f"{self.user.username} - {self.dni}"
 
     @property
-    def is_adult(self) -> bool:
-        today = date.today()
-        age = today.year - self.birth_date.year - (
-            (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
-        )
-        return age >= 18
+    def es_mayor_de_edad(self):
+        from datetime import date
 
-    def __str__(self) -> str:
-        return f"{self.user.username} - {self.document_type} {self.document_number}"
+        hoy = date.today()
+        edad = hoy.year - self.fecha_nacimiento.year - (
+            (hoy.month, hoy.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day)
+        )
+        return edad >= 18
