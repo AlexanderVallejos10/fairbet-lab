@@ -1,11 +1,9 @@
 from django.urls import path
 
-from .views import DepositView, WalletSummaryView, WithdrawView
-
-app_name = "wallet"
+from apps.wallet.views import BalanceView, DepositView, WithdrawView
 
 urlpatterns = [
-    path("summary/", WalletSummaryView.as_view(), name="summary"),
-    path("deposit/", DepositView.as_view(), name="deposit"),
-    path("withdraw/", WithdrawView.as_view(), name="withdraw"),
+    path("deposit/", DepositView.as_view(), name="wallet-deposit"),
+    path("withdraw/", WithdrawView.as_view(), name="wallet-withdraw"),
+    path("balance/", BalanceView.as_view(), name="wallet-balance"),
 ]

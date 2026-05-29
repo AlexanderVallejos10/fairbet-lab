@@ -1,164 +1,214 @@
-from decimal import Decimal, ROUND_HALF_UP
+import uuid
+from decimal import Decimal
 
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from .models import IdempotencyKey, LedgerEntry, LedgerTransaction, WalletAccount
-
-User = get_user_model()
-
-DECIMAL_QUANTIZER = Decimal("0.0001")
-HOUSE_STARTING_BALANCE = Decimal("1000000.0000")
+from apps.users.choices import AccountStatus
+from apps.wallet.models import Account, AccountType, Direction, LedgerEntry
 
 
-def _to_decimal(value) -> Decimal:
+class SaldoInsuficiente(Exception):
+    pass
+
+
+class CuentaNoEncontrada(Exception):
+    pass
+
+
+def _estado_kyc_usuario(usuario):
+    if hasattr(usuario, "account_status"):
+        return usuario.account_status
+    perfil = getattr(usuario, "perfil", None) or getattr(usuario, "profile", None)
+    if perfil:
+        return getattr(perfil, "estado_kyc", None) or getattr(perfil, "kyc_status", None)
+    return None
+
+
+def _get_account(user, account_type):
     try:
-        amount = Decimal(str(value))
-    except Exception as exc:
-        raise ValidationError("Monto inválido.") from exc
-
-    if amount <= 0:
-        raise ValidationError("El monto debe ser mayor que cero.")
-
-    return amount.quantize(DECIMAL_QUANTIZER, rounding=ROUND_HALF_UP)
+        return Account.objects.get(user=user, type=account_type)
+    except Account.DoesNotExist:
+        raise CuentaNoEncontrada(
+            f"No existe cuenta {account_type} para el usuario {getattr(user, 'email', user)}"
+        )
 
 
-def _get_or_create_house_user():
-    house_user, created = User.objects.get_or_create(
-        username="house",
-        defaults={
-            "is_staff": False,
-            "is_superuser": False,
-            "email": "",
-        },
+def _get_global_account(account_type):
+    account, _ = Account.objects.get_or_create(user=None, type=account_type)
+    return account
+
+
+def _calcular_saldo(account):
+    entradas = LedgerEntry.objects.filter(account=account)
+    creditos = sum(e.amount for e in entradas if e.direction == Direction.CREDIT)
+    debitos = sum(e.amount for e in entradas if e.direction == Direction.DEBIT)
+    return creditos - debitos
+
+
+def _lock_account(account):
+    return Account.objects.select_for_update().get(pk=account.pk)
+
+
+def _crear_par_balanceado(cuenta_origen, cuenta_destino, amount, description, transaction_id=None):
+    tid = transaction_id or uuid.uuid4()
+    LedgerEntry.objects.create(
+        account=cuenta_origen,
+        amount=amount,
+        direction=Direction.DEBIT,
+        transaction_id=tid,
+        description=f"{description} — débito {cuenta_origen.type}",
     )
-    if created:
-        house_user.set_unusable_password()
-        house_user.save(update_fields=["password"])
-    return house_user
+    LedgerEntry.objects.create(
+        account=cuenta_destino,
+        amount=amount,
+        direction=Direction.CREDIT,
+        transaction_id=tid,
+        description=f"{description} — crédito {cuenta_destino.type}",
+    )
+    return tid
+
+
+def get_or_create_wallet(user):
+    account, _ = Account.objects.get_or_create(
+        user=user,
+        type=AccountType.WALLET_USUARIO,
+    )
+    return account
 
 
 def ensure_user_accounts(user):
-    wallet_account, _ = WalletAccount.objects.get_or_create(
-        user=user,
-        account_type=WalletAccount.AccountType.WALLET_USUARIO,
-    )
-    pending_account, _ = WalletAccount.objects.get_or_create(
-        user=user,
-        account_type=WalletAccount.AccountType.APUESTAS_PENDIENTES,
-    )
-    bonus_account, _ = WalletAccount.objects.get_or_create(
-        user=user,
-        account_type=WalletAccount.AccountType.BONOS,
-    )
+    wallet = get_or_create_wallet(user)
+    pendientes, _ = Account.objects.get_or_create(user=None, type=AccountType.APUESTAS_PENDIENTES)
+    bonos, _ = Account.objects.get_or_create(user=None, type=AccountType.BONOS)
+    casa, _ = Account.objects.get_or_create(user=None, type=AccountType.CASA)
     return {
-        WalletAccount.AccountType.WALLET_USUARIO: wallet_account,
-        WalletAccount.AccountType.APUESTAS_PENDIENTES: pending_account,
-        WalletAccount.AccountType.BONOS: bonus_account,
+        "wallet_usuario": wallet,
+        "apuestas_pendientes": pendientes,
+        "bonos": bonos,
+        "casa": casa,
     }
 
 
-def ensure_house_account():
-    house_user = _get_or_create_house_user()
-    house_account, _ = WalletAccount.objects.get_or_create(
-        user=house_user,
-        account_type=WalletAccount.AccountType.CASA,
-    )
-
-    if not house_account.entries.exists():
-        opening_tx = LedgerTransaction.objects.create(description="Opening house balance")
-        LedgerEntry.objects.create(
-            transaction=opening_tx,
-            account=house_account,
-            amount=HOUSE_STARTING_BALANCE,
-            direction=LedgerEntry.Direction.CREDIT,
-        )
-
-    return house_account
+def get_balance(user):
+    with transaction.atomic():
+        wallet = _get_account(user, AccountType.WALLET_USUARIO)
+        _lock_account(wallet)
+        return _calcular_saldo(wallet)
 
 
-def get_account_balance(account: WalletAccount) -> Decimal:
-    return account.balance
+def deposit(user, amount, transaction_id=None):
+    if amount <= Decimal("0"):
+        raise ValueError("El monto debe ser mayor a cero.")
 
-
-def get_user_wallet_account(user):
-    accounts = ensure_user_accounts(user)
-    return accounts[WalletAccount.AccountType.WALLET_USUARIO]
-
-
-def _lock_accounts(*accounts):
-    account_ids = sorted(account.id for account in accounts)
-    locked_accounts = WalletAccount.objects.select_for_update().filter(id__in=account_ids)
-    locked_map = {account.id: account for account in locked_accounts}
-    return [locked_map[account.id] for account in accounts]
-
-
-def transfer_between_accounts(
-    from_account: WalletAccount,
-    to_account: WalletAccount,
-    amount,
-    idempotency_key: str,
-    description: str,
-):
-    amount = _to_decimal(amount)
-
-    if from_account.id == to_account.id:
-        raise ValidationError("La cuenta de origen y destino no pueden ser la misma.")
+    if transaction_id and LedgerEntry.objects.filter(transaction_id=transaction_id).exists():
+        return transaction_id
 
     with transaction.atomic():
-        idem, created = IdempotencyKey.objects.get_or_create(key=idempotency_key)
-
-        if not created and idem.transaction_id:
-            return idem.transaction
-
-        from_locked, to_locked = _lock_accounts(from_account, to_account)
-
-        if from_locked.balance < amount:
-            raise ValidationError("Saldo insuficiente.")
-
-        tx = LedgerTransaction.objects.create(description=description)
-
-        LedgerEntry.objects.create(
-            transaction=tx,
-            account=from_locked,
+        wallet = get_or_create_wallet(user)
+        _lock_account(wallet)
+        casa = _get_global_account(AccountType.CASA)
+        tid = _crear_par_balanceado(
+            cuenta_origen=casa,
+            cuenta_destino=wallet,
             amount=amount,
-            direction=LedgerEntry.Direction.DEBIT,
+            description="depósito simulado de fichas",
+            transaction_id=transaction_id,
         )
-        LedgerEntry.objects.create(
-            transaction=tx,
-            account=to_locked,
+    return tid
+
+
+def withdraw(user, amount, transaction_id=None):
+    if amount <= Decimal("0"):
+        raise ValueError("El monto debe ser mayor a cero.")
+
+    if _estado_kyc_usuario(user) not in [AccountStatus.VERIFICADO, "verificado"]:
+        raise ValueError("Tu cuenta debe estar verificada para realizar retiros.")
+
+    if transaction_id and LedgerEntry.objects.filter(transaction_id=transaction_id).exists():
+        return transaction_id
+
+    with transaction.atomic():
+        if transaction_id and LedgerEntry.objects.select_for_update().filter(transaction_id=transaction_id).exists():
+            return transaction_id
+
+        wallet = _get_account(user, AccountType.WALLET_USUARIO)
+        wallet = _lock_account(wallet)
+        saldo = _calcular_saldo(wallet)
+
+        if saldo < amount:
+            raise SaldoInsuficiente(f"Saldo insuficiente: tiene {saldo}, necesita {amount}.")
+
+        casa = _get_global_account(AccountType.CASA)
+        tid = _crear_par_balanceado(
+            cuenta_origen=wallet,
+            cuenta_destino=casa,
             amount=amount,
-            direction=LedgerEntry.Direction.CREDIT,
+            description="retiro virtual de fichas",
+            transaction_id=transaction_id,
         )
-
-        idem.transaction = tx
-        idem.save(update_fields=["transaction"])
-
-        return tx
+    return tid
 
 
-def deposit_virtual_chips(user, amount, idempotency_key: str):
-    house_account = ensure_house_account()
-    user_wallet = get_user_wallet_account(user)
+def reserve_for_bet(user, amount, transaction_id=None):
+    if amount <= Decimal("0"):
+        raise ValueError("El monto debe ser mayor a cero.")
 
-    return transfer_between_accounts(
-        from_account=house_account,
-        to_account=user_wallet,
-        amount=amount,
-        idempotency_key=idempotency_key,
-        description="Deposit virtual chips",
-    )
+    if transaction_id and LedgerEntry.objects.filter(transaction_id=transaction_id).exists():
+        return transaction_id
+
+    with transaction.atomic():
+        wallet = _get_account(user, AccountType.WALLET_USUARIO)
+        _lock_account(wallet)
+        saldo = _calcular_saldo(wallet)
+
+        if saldo < amount:
+            raise SaldoInsuficiente(f"Saldo insuficiente: tiene {saldo}, necesita {amount}.")
+
+        pendientes = _get_global_account(AccountType.APUESTAS_PENDIENTES)
+        tid = _crear_par_balanceado(
+            cuenta_origen=wallet,
+            cuenta_destino=pendientes,
+            amount=amount,
+            description="reserva de fondos para apuesta",
+            transaction_id=transaction_id,
+        )
+    return tid
 
 
-def withdraw_virtual_chips(user, amount, idempotency_key: str):
-    house_account = ensure_house_account()
-    user_wallet = get_user_wallet_account(user)
+def settle_win(user, stake, odds, transaction_id=None):
+    if transaction_id and LedgerEntry.objects.filter(transaction_id=transaction_id).exists():
+        return transaction_id
 
-    return transfer_between_accounts(
-        from_account=user_wallet,
-        to_account=house_account,
-        amount=amount,
-        idempotency_key=idempotency_key,
-        description="Withdraw virtual chips",
-    )
+    payout = (stake * odds).quantize(Decimal("0.0001"))
+
+    with transaction.atomic():
+        pendientes = _get_global_account(AccountType.APUESTAS_PENDIENTES)
+        wallet = _get_account(user, AccountType.WALLET_USUARIO)
+        _lock_account(wallet)
+        tid = _crear_par_balanceado(
+            cuenta_origen=pendientes,
+            cuenta_destino=wallet,
+            amount=payout,
+            description=f"liquidación ganada — payout {payout} (stake {stake} × odds {odds})",
+            transaction_id=transaction_id,
+        )
+    return tid
+
+
+def settle_loss(user, stake, transaction_id=None):
+    if transaction_id and LedgerEntry.objects.filter(transaction_id=transaction_id).exists():
+        return transaction_id
+
+    with transaction.atomic():
+        pendientes = _get_global_account(AccountType.APUESTAS_PENDIENTES)
+        casa = _get_global_account(AccountType.CASA)
+        wallet = _get_account(user, AccountType.WALLET_USUARIO)
+        _lock_account(wallet)
+        tid = _crear_par_balanceado(
+            cuenta_origen=pendientes,
+            cuenta_destino=casa,
+            amount=stake,
+            description=f"liquidación perdida — stake {stake} a la casa",
+            transaction_id=transaction_id,
+        )
+    return tid
