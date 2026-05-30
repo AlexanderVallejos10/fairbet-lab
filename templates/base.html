@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}FairBet Lab{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --ink: #101820;
+      --ink-2: #17212b;
+      --line: #d9e2ea;
+      --muted: #64748b;
+      --surface: #f4f7fb;
+      --card: #ffffff;
+      --brand: #10b981;
+      --brand-dark: #047857;
+      --gold: #f59e0b;
+      --danger: #e11d48;
+    }
+    body { background: var(--surface); color: var(--ink); }
+    .sport-shell { background: linear-gradient(180deg, #101820 0, #17212b 220px, var(--surface) 220px); }
+    .odds-cell { border: 1px solid var(--line); background: #f8fafc; transition: transform .12s ease, border-color .12s ease, background .12s ease; }
+    .odds-cell:hover { transform: translateY(-1px); border-color: var(--brand); background: #ecfdf5; }
+  </style>
+</head>
+<body class="sport-shell min-h-screen">
+  <div class="border-b border-amber-300 bg-amber-100 px-4 py-2 text-center text-sm font-semibold text-amber-950">
+    Plataforma educativa con moneda virtual. No constituye una casa de apuestas.
+  </div>
+
+  <header class="sticky top-0 z-50 border-b border-white/10 bg-[var(--ink)] text-white">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+      <a href="{% url 'web-home' %}" class="flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded bg-[var(--brand)] text-lg font-black text-[var(--ink)]">FB</span>
+        <div class="leading-tight">
+          <p class="text-lg font-black tracking-tight">FairBet Lab</p>
+          <p class="text-xs font-semibold text-slate-300">Sportsbook educativo</p>
+        </div>
+      </a>
+
+      <nav class="order-3 flex w-full gap-2 overflow-x-auto text-sm font-semibold sm:order-2 sm:w-auto">
+        <a href="{% url 'web-events' %}" class="rounded px-3 py-2 text-slate-200 hover:bg-white/10 hover:text-white">Eventos</a>
+        {% if user.is_authenticated %}
+          <a href="{% url 'web-wallet' %}" class="rounded px-3 py-2 text-slate-200 hover:bg-white/10 hover:text-white">Wallet</a>
+          <a href="{% url 'web-historial' %}" class="rounded px-3 py-2 text-slate-200 hover:bg-white/10 hover:text-white">Tickets</a>
+          <a href="{% url 'web-perfil' %}" class="rounded px-3 py-2 text-slate-200 hover:bg-white/10 hover:text-white">Perfil</a>
+          {% if user.is_staff %}
+            <a href="{% url 'web-dashboard' %}" class="rounded px-3 py-2 text-slate-200 hover:bg-white/10 hover:text-white">Operador</a>
+          {% endif %}
+        {% endif %}
+        <a href="/api/docs/" class="rounded px-3 py-2 text-slate-200 hover:bg-white/10 hover:text-white">API</a>
+      </nav>
+
+      <div class="order-2 flex items-center gap-2 sm:order-3">
+        {% if user.is_authenticated %}
+          <div class="hidden rounded border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-200 sm:block">
+            Saldo <span class="text-[var(--brand)]">{{ navbar_balance|default:"0.0000" }}</span>
+          </div>
+          <a href="{% url 'web-wallet' %}" class="rounded bg-[var(--brand)] px-3 py-2 text-xs font-bold text-[var(--ink)] hover:bg-emerald-300">Depositar</a>
+          <a href="{% url 'web-logout' %}" class="rounded border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10">Salir</a>
+        {% else %}
+          <a href="{% url 'web-login' %}" class="rounded border border-white/10 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-white/10">Ingresar</a>
+          <a href="{% url 'web-register' %}" class="rounded bg-[var(--brand)] px-3 py-2 text-xs font-bold text-[var(--ink)] hover:bg-emerald-300">Crear cuenta</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto min-h-[72vh] max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    {% if messages %}
+      <div class="mb-5 space-y-2">
+        {% for message in messages %}
+          <div class="rounded border px-4 py-3 text-sm font-semibold
+            {% if message.tags == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-800
+            {% elif message.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-800
+            {% elif message.tags == 'warning' %}border-amber-200 bg-amber-50 text-amber-900
+            {% else %}border-slate-200 bg-white text-slate-800{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-[var(--line)] bg-white">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-sm text-[var(--muted)] sm:px-6 lg:px-8">
+      <span>FairBet Lab - Simulador educativo</span>
+      <span>Juego responsable | Fichas virtuales | Sin dinero real</span>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,56 @@
+services:
+  web:
+    build: .
+    container_name: fairbet_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      USE_POSTGRES: "True"
+      USE_REDIS_CHANNELS: "True"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16
+    container_name: fairbet_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: fairbet_lab
+      POSTGRES_USER: fairbet_user
+      POSTGRES_PASSWORD: fairbet_password
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: fairbet_redis
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    container_name: fairbet_celery
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      USE_POSTGRES: "True"
+      USE_REDIS_CHANNELS: "True"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - web
+      - redis
+      - db
+
+volumes:
+  postgres_data:

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Ingresar | FairBet Lab{% endblock %}
+
+{% block content %}
+<div class="grid min-h-[64vh] items-center gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+  <section class="hidden rounded bg-[var(--ink)] p-8 text-white shadow-sm lg:block">
+    <p class="text-xs font-black uppercase tracking-[0.18em] text-emerald-300">Sesion segura</p>
+    <h1 class="mt-3 text-4xl font-black">Accede a tu sportsbook educativo</h1>
+    <div class="mt-6 grid gap-3">
+      <div class="rounded bg-white/5 p-4">
+        <p class="font-black">Bloqueo de intentos</p>
+        <p class="mt-1 text-sm text-slate-300">Cinco intentos fallidos bloquean temporalmente el acceso.</p>
+      </div>
+      <div class="rounded bg-white/5 p-4">
+        <p class="font-black">Sesion limitada</p>
+        <p class="mt-1 text-sm text-slate-300">La sesion expira para reducir riesgo en equipos compartidos.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded bg-white p-6 shadow-sm">
+    <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-500">Acceso</p>
+    <h2 class="mt-2 text-3xl font-black text-slate-950">Ingresar</h2>
+    <p class="mt-2 text-sm font-semibold text-slate-500">Usa tu correo y contrasena para acceder a wallet, tickets y perfil.</p>
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="text-sm font-black text-slate-800" for="login-email">Usuario o correo</label>
+        <input id="login-email" name="email" type="text" placeholder="demo o correo@ejemplo.com" class="mt-2 w-full rounded border border-slate-300 px-4 py-3 text-sm font-bold focus:border-emerald-500 focus:outline-none" required>
+      </div>
+      <div>
+        <label class="text-sm font-black text-slate-800" for="login-password">Contrasena</label>
+        <input id="login-password" name="password" type="password" placeholder="********" class="mt-2 w-full rounded border border-slate-300 px-4 py-3 text-sm font-bold focus:border-emerald-500 focus:outline-none" required>
+      </div>
+      <button class="w-full rounded bg-[var(--brand)] px-4 py-3 text-sm font-black text-[var(--ink)] hover:bg-emerald-300">
+        Entrar
+      </button>
+      <p class="text-center text-sm font-semibold text-slate-500">
+        No tienes cuenta? <a href="{% url 'web-register' %}" class="font-black text-emerald-700">Crear cuenta</a>
+      </p>
+    </form>
+  </section>
+</div>
+{% endblock %}

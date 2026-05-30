@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+  <header class="rounded-2xl border border-[var(--slate-200)] bg-white p-6">
+    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--slate-500)]">Historial</p>
+    <h1 class="mt-2 text-3xl font-extrabold text-[var(--slate-900)]">Tus apuestas</h1>
+    <p class="mt-2 text-sm text-[var(--slate-500)]">
+      Seguimiento de apuestas aceptadas, ganadas y perdidas.
+    </p>
+  </header>
+
+  <section class="grid gap-4 md:grid-cols-3">
+    <div class="rounded-2xl border border-[var(--slate-200)] bg-white p-5">
+      <p class="text-sm text-[var(--slate-500)]">Ganadas</p>
+      <p class="mt-2 text-3xl font-extrabold">{{ won_count }}</p>
+    </div>
+    <div class="rounded-2xl border border-[var(--slate-200)] bg-white p-5">
+      <p class="text-sm text-[var(--slate-500)]">Perdidas</p>
+      <p class="mt-2 text-3xl font-extrabold">{{ lost_count }}</p>
+    </div>
+    <div class="rounded-2xl border border-[var(--slate-200)] bg-white p-5">
+      <p class="text-sm text-[var(--slate-500)]">Aceptadas</p>
+      <p class="mt-2 text-3xl font-extrabold">{{ pending_count }}</p>
+    </div>
+  </section>
+
+  <section class="rounded-2xl border border-[var(--slate-200)] bg-white p-6 shadow-sm">
+    <h2 class="text-lg font-bold text-[var(--slate-900)]">Movimientos recientes</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full min-w-[720px] text-left text-sm">
+        <thead class="text-xs uppercase text-[var(--slate-500)]">
+          <tr>
+            <th class="border-b border-[var(--slate-200)] py-3">Evento</th>
+            <th class="border-b border-[var(--slate-200)] py-3">Ticket</th>
+            <th class="border-b border-[var(--slate-200)] py-3">Seleccion</th>
+            <th class="border-b border-[var(--slate-200)] py-3">Stake</th>
+            <th class="border-b border-[var(--slate-200)] py-3">Cuota</th>
+            <th class="border-b border-[var(--slate-200)] py-3">Estado</th>
+            <th class="border-b border-[var(--slate-200)] py-3">Payout</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bet in bets %}
+            <tr>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.event }}</td>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.ticket_code }}</td>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.odd.get_selection_display }}</td>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.stake }}</td>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.odds }}</td>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.status }}</td>
+              <td class="border-b border-[var(--slate-200)] py-3">{{ bet.payout|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="py-6 text-center text-[var(--slate-500)]">
+                Todavia no registras apuestas.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
