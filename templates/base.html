@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,6 +18,167 @@
       --brand-2: #18b89a;
       --danger: #ef4444;
     }
+
+    html[data-theme="light"] {
+      --bg: #f4f7fb;
+      --bg-2: #ffffff;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --line: rgba(15,23,42,.12);
+      --text: #0f172a;
+      --muted: #64748b;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --surface-strong: #eef2f7;
+    }
+
+    html[data-theme="light"] body {
+      background:
+        radial-gradient(circle at top left, rgba(24,184,154,.10), transparent 24%),
+        radial-gradient(circle at top right, rgba(245,200,66,.14), transparent 26%),
+        linear-gradient(180deg, #f7fafc 0%, #e8eef6 100%) !important;
+      color: var(--text);
+    }
+
+    html[data-theme="light"] aside,
+    html[data-theme="light"] header {
+      background: rgba(255,255,255,.92) !important;
+      color: #0f172a;
+      border-color: var(--line) !important;
+      box-shadow: 0 12px 35px rgba(15,23,42,.06);
+    }
+
+    html[data-theme="light"] .glass,
+    html[data-theme="light"] .soft-panel,
+    html[data-theme="light"] .chip,
+    html[data-theme="light"] section[class*="bg-"],
+    html[data-theme="light"] article[class*="bg-"],
+    html[data-theme="light"] div[class*="bg-[#0"],
+    html[data-theme="light"] div[class*="bg-[#1"],
+    html[data-theme="light"] article[class*="bg-[#0"],
+    html[data-theme="light"] article[class*="bg-[#1"],
+    html[data-theme="light"] section[class*="bg-["],
+    html[data-theme="light"] div[class*="bg-[linear-gradient"],
+    html[data-theme="light"] div[class*="bg-[radial-gradient"] {
+      background: var(--surface) !important;
+      color: #0f172a;
+      border-color: var(--line) !important;
+      box-shadow: 0 18px 45px rgba(15,23,42,.10);
+    }
+
+    html[data-theme="light"] [class*="from-slate-"],
+    html[data-theme="light"] [class*="via-slate-"],
+    html[data-theme="light"] [class*="to-emerald-950"],
+    html[data-theme="light"] [class*="to-slate-"] {
+      background: var(--surface) !important;
+      color: #0f172a;
+    }
+
+    html[data-theme="light"] .bg-white,
+    html[data-theme="light"] .bg-slate-50,
+    html[data-theme="light"] .bg-white\/5,
+    html[data-theme="light"] .bg-white\/6,
+    html[data-theme="light"] .bg-white\/10,
+    html[data-theme="light"] .bg-slate-200\/10 {
+      background: var(--surface-soft) !important;
+    }
+
+    html[data-theme="light"] .bg-slate-950,
+    html[data-theme="light"] .bg-slate-900,
+    html[data-theme="light"] .bg-slate-800 {
+      background: var(--surface-strong) !important;
+      color: #0f172a !important;
+    }
+
+    html[data-theme="light"] .text-white,
+    html[data-theme="light"] .text-slate-50,
+    html[data-theme="light"] .text-slate-100,
+    html[data-theme="light"] .text-slate-200,
+    html[data-theme="light"] .text-slate-300,
+    html[data-theme="light"] .text-slate-950,
+    html[data-theme="light"] .text-slate-900,
+    html[data-theme="light"] .text-black {
+      color: #0f172a !important;
+    }
+
+    html[data-theme="light"] .text-slate-400,
+    html[data-theme="light"] .text-slate-500,
+    html[data-theme="light"] .text-slate-600,
+    html[data-theme="light"] .text-slate-700 {
+      color: var(--muted) !important;
+    }
+
+    html[data-theme="light"] .border-white\/10,
+    html[data-theme="light"] .border-slate-200,
+    html[data-theme="light"] .border-slate-300 {
+      border-color: var(--line) !important;
+    }
+
+    html[data-theme="light"] input,
+    html[data-theme="light"] select,
+    html[data-theme="light"] textarea {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border-color: rgba(15,23,42,.16) !important;
+    }
+
+    html[data-theme="light"] input::placeholder,
+    html[data-theme="light"] textarea::placeholder {
+      color: #94a3b8 !important;
+    }
+
+    html[data-theme="light"] table,
+    html[data-theme="light"] thead,
+    html[data-theme="light"] tbody,
+    html[data-theme="light"] tr {
+      border-color: var(--line) !important;
+    }
+
+    html[data-theme="light"] .bg-emerald-600,
+    html[data-theme="light"] .bg-emerald-700,
+    html[data-theme="light"] .bg-amber-600,
+    html[data-theme="light"] .bg-yellow-400,
+    html[data-theme="light"] .bg-slate-950[type="submit"],
+    html[data-theme="light"] button.bg-slate-950,
+    html[data-theme="light"] a.bg-slate-950 {
+      box-shadow: 0 12px 28px rgba(15,23,42,.14);
+    }
+
+    html[data-theme="light"] .bg-emerald-600,
+    html[data-theme="light"] .bg-emerald-700,
+    html[data-theme="light"] .bg-amber-600,
+    html[data-theme="light"] .hover\:bg-emerald-700:hover,
+    html[data-theme="light"] .hover\:bg-amber-700:hover {
+      color: #ffffff !important;
+    }
+
+    html[data-theme="light"] .bg-yellow-400,
+    html[data-theme="light"] .hover\:bg-yellow-300:hover {
+      color: #111827 !important;
+    }
+
+    html[data-theme="light"] .text-emerald-300 {
+      color: #047857 !important;
+    }
+
+    html[data-theme="light"] .text-red-300,
+    html[data-theme="light"] .text-red-200 {
+      color: #b91c1c !important;
+    }
+
+    html[data-theme="light"] .text-amber-100,
+    html[data-theme="light"] .text-amber-300,
+    html[data-theme="light"] .text-amber-900 {
+      color: #92400e !important;
+    }
+
+    html[data-theme="light"] #theme-toggle {
+      background: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+    }
+
+
     body {
       margin: 0;
       background:
@@ -120,6 +281,23 @@
               </span>
             </div>
 
+            <button id="theme-toggle" type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 text-white transition hover:bg-white/5" title="Cambiar tema" aria-label="Cambiar a modo claro">
+              <svg data-theme-icon="sun" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+              </svg>
+              <svg data-theme-icon="moon" class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20.99 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 20.99 12.79Z"></path>
+              </svg>
+            </button>
+
             <a href="{% url 'web-wallet' %}" class="rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-700">
               Depositar
             </a>
@@ -142,6 +320,35 @@
       </main>
     </div>
   </div>
+
+  <script>
+    const themeToggle = document.getElementById("theme-toggle");
+    const root = document.documentElement;
+    const sunIcon = themeToggle.querySelector('[data-theme-icon="sun"]');
+    const moonIcon = themeToggle.querySelector('[data-theme-icon="moon"]');
+
+    const updateThemeButton = (theme) => {
+      const isDark = theme === "dark";
+
+      sunIcon.classList.toggle("hidden", !isDark);
+      moonIcon.classList.toggle("hidden", isDark);
+      themeToggle.setAttribute("aria-label", isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+      themeToggle.setAttribute("title", isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro");
+    };
+
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    root.setAttribute("data-theme", savedTheme);
+    updateThemeButton(savedTheme);
+
+    themeToggle.addEventListener("click", () => {
+      const currentTheme = root.getAttribute("data-theme");
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+
+      root.setAttribute("data-theme", nextTheme);
+      localStorage.setItem("theme", nextTheme);
+      updateThemeButton(nextTheme);
+    });
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>
