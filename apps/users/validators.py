@@ -1,9 +1,7 @@
 from datetime import date
-
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 
 def validate_dni(value):
     if len(value) != 9:
@@ -14,14 +12,13 @@ def validate_dni(value):
         raise ValidationError(
             _('Los primeros 8 caracteres del DNI deben ser dígitos.'),
         )
-
     pesos = [3, 2, 7, 6, 5, 4, 3, 2]
     suma = sum(int(value[i]) * pesos[i] for i in range(8))
     residuo = suma % 11
     resultado = 11 - residuo
     if resultado == 11:
         resultado = 0
-
+        
     digito_ingresado = value[8].upper()
     tabla_numerica = '67890112345'
     tabla_alfabetica = 'KABCDEFGHIJ'

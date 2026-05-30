@@ -1,9 +1,7 @@
 import uuid
-
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
 
 class AccountType(models.TextChoices):
     WALLET_USUARIO = 'wallet_usuario', _('Wallet del usuario')
@@ -11,18 +9,12 @@ class AccountType(models.TextChoices):
     APUESTAS_PENDIENTES = 'apuestas_pendientes', _('Apuestas pendientes')
     BONOS = 'bonos', _('Bonos')
 
-
 class Direction(models.TextChoices):
     DEBIT = 'DEBIT', _('Débito')
     CREDIT = 'CREDIT', _('Crédito')
 
-
 class Account(models.Model):
-    """
-    Representa una cuenta contable dentro del sistema de partida doble.
-    Cada usuario tiene una cuenta wallet_usuario. Las cuentas 'casa',
-    'apuestas_pendientes' y 'bonos' son globales (sin user).
-    """
+    
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -45,13 +37,11 @@ class Account(models.Model):
         verbose_name = _('cuenta')
         verbose_name_plural = _('cuentas')
         constraints = [
-            # Un usuario solo puede tener una cuenta de cada tipo
             models.UniqueConstraint(
                 fields=['user', 'type'],
                 condition=models.Q(user__isnull=False),
                 name='unique_account_per_user_type',
             ),
-            # Las cuentas globales (sin user) son únicas por tipo
             models.UniqueConstraint(
                 fields=['type'],
                 condition=models.Q(user__isnull=True),
@@ -66,17 +56,7 @@ class Account(models.Model):
 
 
 class LedgerEntry(models.Model):
-    """
-    Un movimiento individual en el sistema de partida doble.
 
-    REGLA: por cada operación financiera se crean mínimo 2 entradas
-    balanceadas (la suma de todas las entradas de una misma transaction_id
-    debe ser cero considerando signos).
-
-    El saldo de una cuenta se calcula siempre así:
-        SUM(amount WHERE direction=CREDIT) - SUM(amount WHERE direction=DEBIT)
-    Nunca se guarda como campo.
-    """
     account = models.ForeignKey(
         Account,
         on_delete=models.PROTECT,

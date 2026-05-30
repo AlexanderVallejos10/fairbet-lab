@@ -1,6 +1,5 @@
 from django.urls import reverse
 from rest_framework import status
-
 from apps.users.choices import AccountStatus
 from apps.users.models import User
 
@@ -62,7 +61,6 @@ class TestRegisterView:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         assert 'password' in resp.data
 
-
 class TestTokenView:
     url = '/api/token/'
 
@@ -89,20 +87,16 @@ class TestTokenView:
         }, format='json')
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
-
 class TestMeView:
     url = '/api/auth/me/'
-
     def test_me_authenticated(self, auth_client):
         resp = auth_client.get(self.url)
         assert resp.status_code == status.HTTP_200_OK
         assert resp.data['email'] == 'test@example.com'
         assert resp.data['account_status'] == 'pendiente_verificacion'
-
     def test_me_unauthenticated(self, api_client):
         resp = api_client.get(self.url)
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
-
 
 class TestUpdateLimitsView:
     url = '/api/auth/limits/'
@@ -155,7 +149,6 @@ class TestUpdateLimitsView:
         }, format='json')
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
 
-
 class TestSelfExclusionView:
     url = '/api/auth/self-exclusion/'
 
@@ -183,7 +176,6 @@ class TestSelfExclusionView:
             'exclusion_type': '7_dias',
         }, format='json')
         assert resp.status_code == status.HTTP_401_UNAUTHORIZED
-
 
 class TestVerifyAccountView:
     url = '/api/auth/verify-account/'

@@ -1,11 +1,9 @@
 from datetime import timedelta
 from decimal import Decimal
-
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
-
 from apps.audit.models import AuditLog, SuspiciousActivity, compute_hash
 from apps.betting.choices import BetStatus
 from apps.betting.models import Bet, Event, Market
@@ -13,12 +11,7 @@ from apps.wallet.models import AccountType, Direction, LedgerEntry
 
 
 def verify_chain():
-    """
-    Recorre toda la cadena de auditoria en orden cronologico y valida
-    que cada registro apunte correctamente al hash anterior.
-    """
     previous_hash = '0'
-
     for index, record in enumerate(AuditLog.objects.order_by('created_at', 'id'), start=1):
         expected_hash = compute_hash(previous_hash, record.payload)
         if record.prev_hash != previous_hash or record.hash != expected_hash:
@@ -29,12 +22,10 @@ def verify_chain():
                 'found_hash': record.hash,
             }
         previous_hash = record.hash
-
     return {
         'valid': True,
         'total_records': AuditLog.objects.count(),
     }
-
 
 def flag_fast_bets(user):
     since = timezone.now() - timedelta(seconds=60)
@@ -48,15 +39,12 @@ def flag_fast_bets(user):
         detail={'bets_last_60_seconds': count},
     )
 
-
 def flag_shared_ip_accounts(bet):
     if not bet.ip_address:
         return None
-
     related_bets = Bet.objects.filter(ip_address=bet.ip_address).exclude(user=bet.user)
     if not related_bets.exists():
         return None
-
     related_user_ids = list(related_bets.values_list('user_id', flat=True).distinct())
     related_user_emails = list(
         get_user_model().objects.filter(id__in=related_user_ids).values_list('email', flat=True)
@@ -72,19 +60,16 @@ def flag_shared_ip_accounts(bet):
         },
     )
 
-
 def flag_deposit_cashout(entry):
     if entry.account.type != AccountType.WALLET_USUARIO or entry.direction != Direction.CREDIT:
         return None
     if not entry.account.user_id:
         return None
-
     description = entry.description.lower()
     is_deposit = 'dep' in description
     is_cashout = 'cashout' in description
     if not (is_deposit or is_cashout):
         return None
-
     since = entry.created_at - timedelta(minutes=5)
     base = LedgerEntry.objects.filter(
         account__user=entry.account.user,
@@ -96,7 +81,6 @@ def flag_deposit_cashout(entry):
     counterpart = base.filter(description__icontains='cashout' if is_deposit else 'dep').first()
     if not counterpart:
         return None
-
     return SuspiciousActivity.objects.create(
         user=entry.account.user,
         rule_triggered='deposito_cashout',
@@ -107,15 +91,12 @@ def flag_deposit_cashout(entry):
         },
     )
 
-
 def dashboard_metrics():
     won = Bet.objects.filter(status=BetStatus.SETTLED_WON)
     lost = Bet.objects.filter(status=BetStatus.SETTLED_LOST)
-
     lost_stakes = lost.aggregate(total=Coalesce(Sum('stake'), Decimal('0.0000')))['total']
     paid_payouts = sum(((bet.stake * bet.odds).quantize(Decimal('0.0001')) for bet in won), Decimal('0.0000'))
     ggr = (lost_stakes - paid_payouts).quantize(Decimal('0.0001'))
-
     exposure = []
     events = Event.objects.filter(status__in=[Event.Status.PROGRAMADO, Event.Status.EN_VIVO]).prefetch_related(
         'markets__selections',
@@ -132,7 +113,6 @@ def dashboard_metrics():
                 selections.append({'selection': selection.name, 'exposure': str(amount.quantize(Decimal('0.0001')))})
         if selections:
             exposure.append({'event_id': event.id, 'event': event.name, 'selections': selections})
-
     User = get_user_model()
     status_counts = Bet.objects.values('status').annotate(total=Count('id'))
     counts = {item['status']: item['total'] for item in status_counts}

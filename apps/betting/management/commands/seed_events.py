@@ -1,106 +1,267 @@
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 
 from apps.betting.models import Event, Market, Selection
 
 
 class Command(BaseCommand):
-    help = 'Crea eventos semilla con mercados 1X2 y cuotas realistas (mix EN_VIVO + PROGRAMADO).'
+    help = 'Crea eventos semilla multideporte con mercados permitidos.'
 
     def handle(self, *args, **options):
+        now = timezone.now()
         fixtures = [
-            # EN_VIVO events (started in the past, few minutes ago)
+            # FUTBOL - EN_VIVO
             {
                 'name': 'Manchester United vs Liverpool',
-                'sport': 'futbol',
-                'status': 'en_vivo',
-                'starts_at_delta': -30,  # 30 minutos atrás
-                'odds': ('2.1000', '3.4000', '3.8000'),
+                'sport': Event.Sport.FUTBOL,
+                'status': Event.Status.EN_VIVO,
+                'starts_at': now - timezone.timedelta(minutes=30),
+                'markets': [
+                    {
+                        'name': 'Resultado final',
+                        'market_type': Market.Type.UNO_X_DOS,
+                        'selections': [
+                            ('Manchester United', '2.1000'),
+                            ('Empate', '3.4000'),
+                            ('Liverpool', '3.8000'),
+                        ],
+                    },
+                    {
+                        'name': 'Más/Menos goles',
+                        'market_type': Market.Type.OVER_UNDER,
+                        'selections': [
+                            ('Más de 2.5', '1.9500'),
+                            ('Menos de 2.5', '1.7500'),
+                        ],
+                    },
+                    {
+                        'name': 'Ambos anotan',
+                        'market_type': Market.Type.BTTS,
+                        'selections': [
+                            ('Sí', '1.9000'),
+                            ('No', '1.8000'),
+                        ],
+                    },
+                ],
             },
-            {
-                'name': 'Barcelona vs Bayern Munich',
-                'sport': 'futbol',
-                'status': 'en_vivo',
-                'starts_at_delta': -15,  # 15 minutos atrás
-                'odds': ('2.3000', '3.2000', '3.5000'),
-            },
-            # PROGRAMADO events (future)
+            # FUTBOL - PROGRAMADO
             {
                 'name': 'Alianza Lima vs Sporting Cristal',
-                'sport': 'futbol',
-                'status': 'programado',
-                'starts_at_delta': 1,  # 1 día adelante
-                'odds': ('2.1000', '3.4000', '3.8000'),
+                'sport': Event.Sport.FUTBOL,
+                'status': Event.Status.PROGRAMADO,
+                'starts_at': now + timezone.timedelta(days=1),
+                'markets': [
+                    {
+                        'name': 'Resultado final',
+                        'market_type': Market.Type.UNO_X_DOS,
+                        'selections': [
+                            ('Alianza Lima', '2.0500'),
+                            ('Empate', '3.2000'),
+                            ('Sporting Cristal', '3.8500'),
+                        ],
+                    },
+                    {
+                        'name': 'Más/Menos goles',
+                        'market_type': Market.Type.OVER_UNDER,
+                        'selections': [
+                            ('Más de 2.5', '1.9200'),
+                            ('Menos de 2.5', '1.7800'),
+                        ],
+                    },
+                    {
+                        'name': 'Ambos anotan',
+                        'market_type': Market.Type.BTTS,
+                        'selections': [
+                            ('Sí', '1.8700'),
+                            ('No', '1.8500'),
+                        ],
+                    },
+                ],
             },
+            # BASQUET - EN_VIVO
             {
-                'name': 'Universitario vs Melgar',
-                'sport': 'futbol',
-                'status': 'programado',
-                'starts_at_delta': 2,
-                'odds': ('1.9500', '3.2500', '4.1000'),
+                'name': 'Lakers vs Celtics',
+                'sport': Event.Sport.BASQUET,
+                'status': Event.Status.EN_VIVO,
+                'starts_at': now - timezone.timedelta(minutes=15),
+                'markets': [
+                    {
+                        'name': 'Ganador del partido',
+                        'market_type': Market.Type.WINNER,
+                        'selections': [
+                            ('Lakers', '1.7000'),
+                            ('Celtics', '2.0500'),
+                        ],
+                    },
+                    {
+                        'name': 'Hándicap',
+                        'market_type': Market.Type.HANDICAP,
+                        'selections': [
+                            ('Lakers -3.5', '1.9100'),
+                            ('Celtics +3.5', '1.9100'),
+                        ],
+                    },
+                    {
+                        'name': 'Totales',
+                        'market_type': Market.Type.TOTALS,
+                        'selections': [
+                            ('Más de 220.5', '1.8800'),
+                            ('Menos de 220.5', '1.8800'),
+                        ],
+                    },
+                ],
             },
+            # BASQUET - PROGRAMADO
             {
-                'name': 'Peru vs Chile',
-                'sport': 'futbol',
-                'status': 'programado',
-                'starts_at_delta': 3,
-                'odds': ('2.4500', '3.1000', '2.9000'),
+                'name': 'Bulls vs Warriors',
+                'sport': Event.Sport.BASQUET,
+                'status': Event.Status.PROGRAMADO,
+                'starts_at': now + timezone.timedelta(days=2),
+                'markets': [
+                    {
+                        'name': 'Ganador del partido',
+                        'market_type': Market.Type.WINNER,
+                        'selections': [
+                            ('Bulls', '2.1000'),
+                            ('Warriors', '1.7800'),
+                        ],
+                    },
+                    {
+                        'name': 'Hándicap',
+                        'market_type': Market.Type.HANDICAP,
+                        'selections': [
+                            ('Bulls +4.5', '1.9100'),
+                            ('Warriors -4.5', '1.9100'),
+                        ],
+                    },
+                    {
+                        'name': 'Totales',
+                        'market_type': Market.Type.TOTALS,
+                        'selections': [
+                            ('Más de 228.5', '1.9000'),
+                            ('Menos de 228.5', '1.9000'),
+                        ],
+                    },
+                ],
             },
+            # VOLEY - EN_VIVO
             {
-                'name': 'Argentina vs Brasil',
-                'sport': 'futbol',
-                'status': 'programado',
-                'starts_at_delta': 4,
-                'odds': ('2.3000', '3.3000', '3.0000'),
+                'name': 'Regatas vs Géminis',
+                'sport': Event.Sport.VOLEY,
+                'status': Event.Status.EN_VIVO,
+                'starts_at': now - timezone.timedelta(minutes=8),
+                'markets': [
+                    {
+                        'name': 'Ganador del partido',
+                        'market_type': Market.Type.WINNER,
+                        'selections': [
+                            ('Regatas', '1.8200'),
+                            ('Géminis', '1.9800'),
+                        ],
+                    },
+                    {
+                        'name': 'Sets',
+                        'market_type': Market.Type.SETS,
+                        'selections': [
+                            ('3 sets', '2.3000'),
+                            ('4 sets', '2.1000'),
+                            ('5 sets', '3.0000'),
+                        ],
+                    },
+                    {
+                        'name': 'Totales',
+                        'market_type': Market.Type.TOTALS,
+                        'selections': [
+                            ('Más de 3.5 sets', '1.9500'),
+                            ('Menos de 3.5 sets', '1.7500'),
+                        ],
+                    },
+                ],
             },
+            # VOLEY - PROGRAMADO
             {
-                'name': 'Real Madrid vs Barcelona',
-                'sport': 'futbol',
-                'status': 'programado',
-                'starts_at_delta': 5,
-                'odds': ('2.2000', '3.5000', '3.2000'),
+                'name': 'Perú vs Argentina',
+                'sport': Event.Sport.VOLEY,
+                'status': Event.Status.PROGRAMADO,
+                'starts_at': now + timezone.timedelta(days=3),
+                'markets': [
+                    {
+                        'name': 'Ganador del partido',
+                        'market_type': Market.Type.WINNER,
+                        'selections': [
+                            ('Perú', '2.2500'),
+                            ('Argentina', '1.6500'),
+                        ],
+                    },
+                    {
+                        'name': 'Sets',
+                        'market_type': Market.Type.SETS,
+                        'selections': [
+                            ('3 sets', '2.2500'),
+                            ('4 sets', '2.0500'),
+                            ('5 sets', '3.1000'),
+                        ],
+                    },
+                    {
+                        'name': 'Totales',
+                        'market_type': Market.Type.TOTALS,
+                        'selections': [
+                            ('Más de 3.5 sets', '1.9000'),
+                            ('Menos de 3.5 sets', '1.8000'),
+                        ],
+                    },
+                ],
             },
         ]
 
-        created = 0
-        for fixture in fixtures:
-            name = fixture['name']
-            sport = fixture['sport']
-            status = fixture['status']
-            odds = fixture['odds']
-            
-            # Calcular starts_at
-            if status == 'en_vivo':
-                # EN_VIVO: pasado (minutos atrás)
-                starts_at = timezone.now() + timezone.timedelta(minutes=fixture['starts_at_delta'])
-            else:
-                # PROGRAMADO: futuro (días adelante)
-                starts_at = timezone.now() + timezone.timedelta(days=fixture['starts_at_delta'])
-            
-            # Usar update_or_create para manejar re-ejecuciones
-            event, event_created = Event.objects.update_or_create(
-                name=name,
-                defaults={
-                    'sport': sport,
-                    'status': status,
-                    'starts_at': starts_at,
-                },
-            )
-            if event_created:
-                created += 1
+        created_events = 0
+        updated_events = 0
 
-            market, _ = Market.objects.get_or_create(
-                event=event,
-                name='Resultado final',
-                market_type=Market.Type.UNO_X_DOS,
-            )
-            for selection_name, selection_odds in zip(('local', 'empate', 'visitante'), odds):
-                Selection.objects.update_or_create(
-                    market=market,
-                    name=selection_name,
-                    defaults={'odds': Decimal(selection_odds)},
+        with transaction.atomic():
+            for fixture in fixtures:
+                event, created = Event.objects.update_or_create(
+                    name=fixture['name'],
+                    defaults={
+                        'sport': fixture['sport'],
+                        'status': fixture['status'],
+                        'starts_at': fixture['starts_at'],
+                        'live_betting_enabled': True,
+                        'max_bets': 5000,
+                        'max_event_exposure': Decimal('100000.0000'),
+                    },
                 )
+                if created:
+                    created_events += 1
+                else:
+                    updated_events += 1
 
-        self.stdout.write(self.style.SUCCESS(f'Seed de eventos completado. Eventos nuevos: {created}'))
+                for market_data in fixture['markets']:
+                    market, _ = Market.objects.update_or_create(
+                        event=event,
+                        name=market_data['name'],
+                        defaults={
+                            'market_type': market_data['market_type'],
+                            'status': Market.Status.ABIERTO,
+                            'suspended_until': None,
+                            'max_bets': 1500,
+                            'max_exposure': Decimal('25000.0000'),
+                        },
+                    )
+
+                    for selection_name, selection_odds in market_data['selections']:
+                        Selection.objects.update_or_create(
+                            market=market,
+                            name=selection_name,
+                            defaults={
+                                'odds': Decimal(selection_odds),
+                            },
+                        )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Seed multideporte completado. Nuevos: {created_events} | Actualizados: {updated_events}'
+            )
+        )

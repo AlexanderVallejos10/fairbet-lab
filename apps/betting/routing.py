@@ -1,5 +1,4 @@
 from django.urls import path
-
 from apps.betting.consumers import OddsConsumer
 
 websocket_urlpatterns = [

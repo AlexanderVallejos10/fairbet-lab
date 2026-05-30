@@ -1,18 +1,14 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
 from apps.audit.models import AuditLog
 from apps.audit.services import flag_deposit_cashout, flag_fast_bets, flag_shared_ip_accounts
 from apps.betting.models import Bet
 from apps.wallet.models import LedgerEntry
 
-
 @receiver(post_save, sender=LedgerEntry)
 def audit_ledger_entry(sender, instance, created, **kwargs):
-    """Registra en auditoria cada nueva entrada contable creada en wallet."""
     if not created:
         return
-
     AuditLog.objects.create(
         event_type='wallet.ledgerentry.created',
         payload={
@@ -27,7 +23,6 @@ def audit_ledger_entry(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Bet)
 def audit_bet_status_change(sender, instance, created, **kwargs):
-    """Audita la creacion de apuestas y sus cambios de estado validos."""
     if created:
         AuditLog.objects.create(
             event_type='bet.created',
@@ -46,11 +41,9 @@ def audit_bet_status_change(sender, instance, created, **kwargs):
         flag_fast_bets(instance.user)
         flag_shared_ip_accounts(instance)
         return
-
     original_status = getattr(instance, '_original_status', instance.status)
     if instance.status == original_status:
         return
-
     AuditLog.objects.create(
         event_type='bet.status_changed',
         payload={

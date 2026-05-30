@@ -1,6 +1,5 @@
 import uuid
 from decimal import Decimal, InvalidOperation
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -8,22 +7,19 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-
 from apps.audit.services import dashboard_metrics
 from apps.betting.choices import BetStatus
-from apps.betting.models import Bet, Event, Market, Selection
+from apps.betting.models import AccumulatedBet, Bet, Event, Market, Selection
 from apps.users.choices import AccountStatus, ExclusionType
 from apps.users.serializers import DepositLimitSerializer, RegisterSerializer, SelfExclusionSerializer
-from apps.wallet.models import AccountType, LedgerEntry
-from apps.wallet.services import SaldoInsuficiente, deposit, get_balance, get_or_create_wallet, reserve_for_bet, withdraw
-
+from apps.wallet.models import LedgerEntry
+from apps.wallet.services import (SaldoInsuficiente,deposit,get_balance,get_or_create_wallet,reserve_for_bet,withdraw,)
 
 def _decimal_from_post(value):
     try:
         return Decimal(value).quantize(Decimal('0.0001'))
     except (InvalidOperation, TypeError):
         raise ValueError('Monto invalido.')
-
 
 def home(request):
     live_events = (
@@ -36,27 +32,38 @@ def home(request):
         .prefetch_related('markets__selections')
         .order_by('starts_at')
     )
+    events_for_operator = (
+        Event.objects
+        .prefetch_related('markets__selections')
+        .order_by('-starts_at')
+    )
     return render(
         request,
         'betting/home.html',
-        {'live_events': live_events, 'programmed_events': programmed_events}
+        {
+            'live_events': live_events,
+            'programmed_events': programmed_events,
+            'events_for_operator': events_for_operator,
+        }
     )
 
 
 def login_view(request):
     if request.method == 'POST':
-        user = authenticate(request, email=request.POST.get('email'), password=request.POST.get('password'))
+        user = authenticate(
+            request,
+            email=request.POST.get('email'),
+            password=request.POST.get('password'),
+        )
         if user:
             login(request, user)
             return redirect('web-home')
         messages.error(request, 'Credenciales invalidas.')
     return render(request, 'auth/login.html')
 
-
 def logout_view(request):
     logout(request)
     return redirect('web-home')
-
 
 def register_view(request):
     if request.method == 'POST':
@@ -68,7 +75,6 @@ def register_view(request):
             return redirect('web-home')
         return render(request, 'auth/register.html', {'errors': serializer.errors, 'form': request.POST})
     return render(request, 'auth/register.html')
-
 
 @login_required(login_url='web-login')
 def bet_view(request, selection_id):
@@ -104,14 +110,17 @@ def bet_view(request, selection_id):
 
         if odds_expected is not None and selection.odds != odds_expected:
             if is_ajax:
-                return JsonResponse({
-                    'odds_expected': str(odds_expected),
-                    'odds_current': str(selection.odds),
-                }, status=409)
+                return JsonResponse(
+                    {
+                        'odds_expected': str(odds_expected),
+                        'odds_current': str(selection.odds),
+                    },
+                    status=409,
+                )
             messages.warning(
                 request,
                 f'Las cuotas cambiaron: {odds_expected} → {selection.odds}. '
-                'Envía de nuevo para confirmar la nueva cuota.'
+                'Envía de nuevo para confirmar la nueva cuota.',
             )
 
         try:
@@ -121,17 +130,12 @@ def bet_view(request, selection_id):
                 raise ValueError('El monto supera el limite maximo por apuesta.')
 
             reserve_for_bet(request.user, stake, transaction_id=uuid.uuid4())
-            Bet.objects.create(
-                user=request.user,
-                market=selection.market,
-                selection=selection,
-                stake=stake,
-                odds=selection.odds,
-            )
+            Bet.objects.create(user=request.user,market=selection.market,selection=selection,stake=stake,odds=selection.odds,)
             messages.success(request, 'Apuesta registrada con moneda virtual.')
             return redirect('web-historial')
         except (SaldoInsuficiente, ValueError) as exc:
             messages.error(request, str(exc))
+
     return render(request, 'betting/bet.html', {'selection': selection, 'balance': balance})
 
 
@@ -146,11 +150,7 @@ def wallet_view(request):
                 if request.user.account_status != AccountStatus.VERIFICADO:
                     raise ValueError('Tu cuenta debe estar verificada para realizar depositos.')
 
-                limit_map = {
-                    'deposit_limit_daily': 'diario',
-                    'deposit_limit_weekly': 'semanal',
-                    'deposit_limit_monthly': 'mensual',
-                }
+                limit_map = {'deposit_limit_daily': 'diario','deposit_limit_weekly': 'semanal','deposit_limit_monthly': 'mensual',}
                 for field, label in limit_map.items():
                     limit = getattr(request.user, field)
                     if limit is not None and amount > limit:
@@ -176,11 +176,25 @@ def wallet_view(request):
 
 @login_required(login_url='web-login')
 def historial_view(request):
-    qs = Bet.objects.filter(user=request.user).select_related('market__event', 'selection')
-    won_count = qs.filter(status=BetStatus.SETTLED_WON).count()
-    lost_count = qs.filter(status=BetStatus.SETTLED_LOST).count()
-    pending_count = qs.filter(status=BetStatus.ACCEPTED).count()
-    bets = qs.order_by('-created_at')[:20]
+    simple_qs = Bet.objects.filter(user=request.user).select_related('market__event', 'selection')
+    acc_qs = AccumulatedBet.objects.filter(user=request.user).prefetch_related('legs__selection', 'legs__market__event')
+
+    won_count = (
+        simple_qs.filter(status=BetStatus.SETTLED_WON).count()
+        + acc_qs.filter(status=BetStatus.SETTLED_WON).count()
+    )
+    lost_count = (
+        simple_qs.filter(status=BetStatus.SETTLED_LOST).count()
+        + acc_qs.filter(status=BetStatus.SETTLED_LOST).count()
+    )
+    pending_count = (
+        simple_qs.filter(status=BetStatus.ACCEPTED).count()
+        + acc_qs.filter(status=BetStatus.ACCEPTED).count()
+    )
+
+    bets = simple_qs.order_by('-created_at')[:20]
+    accumulators = acc_qs.order_by('-created_at')[:20]
+
     bet_list = []
     for b in bets:
         payout = None
@@ -188,6 +202,7 @@ def historial_view(request):
             payout = (b.stake * b.odds) - b.stake
         bet_list.append({
             'id': b.id,
+            'type': 'simple',
             'market': b.market,
             'selection': b.selection,
             'stake': b.stake,
@@ -196,8 +211,26 @@ def historial_view(request):
             'created_at': b.created_at,
             'payout': payout,
         })
+
+    acc_list = []
+    for acc in accumulators:
+        payout = None
+        if acc.status == BetStatus.SETTLED_WON:
+            payout = (acc.stake * acc.combined_odds) - acc.stake
+        acc_list.append({
+            'id': acc.id,
+            'type': 'accumulator',
+            'stake': acc.stake,
+            'combined_odds': acc.combined_odds,
+            'status': acc.status,
+            'created_at': acc.created_at,
+            'payout': payout,
+            'legs': acc.legs.all(),
+        })
+
     return render(request, 'betting/historial.html', {
         'bets': bet_list,
+        'accumulators': acc_list,
         'won_count': won_count,
         'lost_count': lost_count,
         'pending_count': pending_count,
@@ -211,7 +244,14 @@ def dashboard_view(request):
     events = Event.objects.filter(
         status__in=[Event.Status.PROGRAMADO, Event.Status.EN_VIVO]
     ).prefetch_related('markets__selections')
-    return render(request, 'dashboard/dashboard.html', {'metrics': dashboard_metrics(), 'events': events})
+    return render(
+        request,
+        'dashboard/dashboard.html',
+        {
+            'metrics': dashboard_metrics(),
+            'events': events,
+        },
+    )
 
 
 @login_required(login_url='web-login')

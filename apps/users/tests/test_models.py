@@ -1,15 +1,11 @@
 from datetime import date, timedelta
-
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-
 from apps.users.choices import AccountStatus
 from apps.users.models import DepositLimitChange, SelfExclusion
-
 User = get_user_model()
-
 
 class TestUserManager:
     def test_create_user(self, db):
@@ -90,16 +86,12 @@ class TestUserManager:
 class TestUserModel:
     def test_str_representation(self, user):
         assert str(user) == 'Test User (123456781)'
-
     def test_get_full_name(self, user):
         assert user.get_full_name() == 'Test User'
-
     def test_get_short_name(self, user):
         assert user.get_short_name() == 'Test'
-
     def test_email_as_username_field(self):
         assert User.USERNAME_FIELD == 'email'
-
     def test_unique_email(self, db, user):
         with pytest.raises(Exception):
             User.objects.create_user(
@@ -121,7 +113,6 @@ class TestUserModel:
                 birth_date=date(1990, 1, 1),
                 password='pass123!',
             )
-
 
 class TestSelfExclusion:
     def test_create_temporal(self, db, user):
@@ -149,7 +140,6 @@ class TestSelfExclusion:
             exclusion_type='30_dias',
         )
         assert str(exclusion) == 'test@example.com - 30 días'
-
 
 class TestDepositLimitChange:
     def test_create_record(self, db, user):

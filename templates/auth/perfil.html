@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="space-y-8">
-  <header class="rounded-[2rem] bg-slate-950 p-8 text-white shadow-2xl">
-    <p class="text-xs font-bold uppercase tracking-[0.35em] text-emerald-400">Juego responsable</p>
+  <header class="rounded-[2rem] bg-[linear-gradient(160deg,#10182b,#0b1020_55%,#111f3a)] p-8 text-white shadow-2xl">
+    <p class="text-xs font-bold uppercase tracking-[0.35em] text-yellow-400">Juego responsable</p>
     <h1 class="mt-3 text-4xl font-black">Tu perfil</h1>
     <p class="mt-3 max-w-2xl text-sm text-slate-300">
       Ajusta límites, autoexclusión y revisa el estado de tu cuenta.
@@ -10,33 +10,35 @@
   </header>
 
   <section class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg">
+    <div class="glass rounded-[2rem] p-6 shadow-2xl">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-500">Cuenta</p>
-          <h2 class="mt-2 text-2xl font-black text-slate-950">{{ user.get_full_name|default:user.email }}</h2>
-          <p class="text-sm text-slate-500">{{ user.email }}</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Cuenta</p>
+          <h2 class="mt-2 text-2xl font-black text-white">
+            {% firstof user.get_full_name user.email %}
+          </h2>
+          <p class="text-sm text-slate-400">{{ user.email }}</p>
         </div>
-        <span class="rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-700">
+        <span class="rounded-full bg-white/5 px-4 py-2 text-xs font-bold text-slate-200 border border-white/10">
           Estado: {{ user.account_status }}
         </span>
       </div>
 
       {% if user.is_staff %}
-      <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-        <p class="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700">Operador</p>
-        <h3 class="mt-2 text-lg font-black text-slate-950">Accesos rápidos</h3>
+      <div class="mt-6 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5">
+        <p class="text-xs font-bold uppercase tracking-[0.28em] text-yellow-400">Operador</p>
+        <h3 class="mt-2 text-lg font-black text-white">Accesos rápidos</h3>
         <div class="mt-4 grid gap-3 sm:grid-cols-2">
-          <a href="/admin/betting/event/add/" class="rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-700">
+          <a href="/admin/betting/event/add/" class="rounded-2xl bg-yellow-400 px-4 py-3 text-center text-sm font-black text-black hover:bg-yellow-300">
             Crear evento
           </a>
-          <a href="/admin/betting/event/" class="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">
+          <a href="/admin/betting/event/" class="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-bold text-white hover:bg-white/5">
             Editar eventos
           </a>
-          <a href="/admin/betting/market/add/" class="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">
+          <a href="/admin/betting/market/add/" class="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-bold text-white hover:bg-white/5">
             Crear mercado
           </a>
-          <a href="/admin/betting/selection/add/" class="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">
+          <a href="/admin/betting/selection/add/" class="rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-bold text-white hover:bg-white/5">
             Crear selección
           </a>
         </div>
@@ -44,33 +46,33 @@
       {% endif %}
     </div>
 
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg">
-      <p class="text-xs font-bold uppercase tracking-[0.28em] text-slate-500">Resumen</p>
+    <div class="glass rounded-[2rem] p-6 shadow-2xl">
+      <p class="text-xs font-bold uppercase tracking-[0.28em] text-slate-400">Resumen</p>
       <div class="mt-4 space-y-4">
-        <div class="rounded-2xl bg-slate-50 p-4">
-          <p class="text-sm text-slate-500">Depósitos diarios</p>
-          <p class="mt-1 text-lg font-black text-slate-950">{{ user.deposit_limit_daily|default:"sin limite" }}</p>
+        <div class="rounded-2xl bg-white/5 p-4 border border-white/10">
+          <p class="text-sm text-slate-400">Depósitos diarios</p>
+          <p class="mt-1 text-lg font-black text-white">{{ user.deposit_limit_daily|default:"sin limite" }}</p>
         </div>
-        <div class="rounded-2xl bg-slate-50 p-4">
-          <p class="text-sm text-slate-500">Depósitos semanales</p>
-          <p class="mt-1 text-lg font-black text-slate-950">{{ user.deposit_limit_weekly|default:"sin limite" }}</p>
+        <div class="rounded-2xl bg-white/5 p-4 border border-white/10">
+          <p class="text-sm text-slate-400">Depósitos semanales</p>
+          <p class="mt-1 text-lg font-black text-white">{{ user.deposit_limit_weekly|default:"sin limite" }}</p>
         </div>
-        <div class="rounded-2xl bg-slate-50 p-4">
-          <p class="text-sm text-slate-500">Depósitos mensuales</p>
-          <p class="mt-1 text-lg font-black text-slate-950">{{ user.deposit_limit_monthly|default:"sin limite" }}</p>
+        <div class="rounded-2xl bg-white/5 p-4 border border-white/10">
+          <p class="text-sm text-slate-400">Depósitos mensuales</p>
+          <p class="mt-1 text-lg font-black text-white">{{ user.deposit_limit_monthly|default:"sin limite" }}</p>
         </div>
       </div>
     </div>
   </section>
 
   <section class="grid gap-6 lg:grid-cols-2">
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg">
+    <div class="glass rounded-[2rem] p-6 shadow-2xl">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-black text-slate-950">Límites de depósito</h2>
-          <p class="mt-1 text-sm text-slate-500">Bajar el límite aplica de inmediato. Subirlo espera 24h.</p>
+          <h2 class="text-lg font-black text-white">Límites de depósito</h2>
+          <p class="mt-1 text-sm text-slate-400">Bajar el límite aplica de inmediato. Subirlo espera 24h.</p>
         </div>
-        <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">Cooldown 24h</span>
+        <span class="rounded-full bg-yellow-400/10 px-3 py-1 text-xs font-bold text-yellow-400">Cooldown 24h</span>
       </div>
 
       <form method="post" class="mt-6 space-y-4">
@@ -78,9 +80,9 @@
         <input type="hidden" name="action" value="limits">
 
         <div>
-          <label class="text-sm font-semibold text-slate-700" for="field-select">Periodo</label>
+          <label class="text-sm font-semibold text-slate-200" for="field-select">Periodo</label>
           <select id="field-select" name="field_name"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                  class="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-yellow-400">
             <option value="deposit_limit_daily">Diario</option>
             <option value="deposit_limit_weekly">Semanal</option>
             <option value="deposit_limit_monthly">Mensual</option>
@@ -88,24 +90,24 @@
         </div>
 
         <div>
-          <label class="text-sm font-semibold text-slate-700" for="new-limit-value">Nuevo límite</label>
+          <label class="text-sm font-semibold text-slate-200" for="new-limit-value">Nuevo límite</label>
           <input id="new-limit-value" name="new_value" placeholder="Ej: 500"
-                 class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-emerald-500">
+                 class="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-yellow-400">
         </div>
 
-        <button class="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700">
+        <button class="w-full rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-black text-black hover:bg-yellow-300">
           Actualizar límite
         </button>
       </form>
     </div>
 
-    <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg">
+    <div class="glass rounded-[2rem] p-6 shadow-2xl">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-black text-slate-950">Autoexclusión</h2>
-          <p class="mt-1 text-sm text-slate-500">Bloquea tu cuenta temporalmente o de forma indefinida.</p>
+          <h2 class="text-lg font-black text-white">Autoexclusión</h2>
+          <p class="mt-1 text-sm text-slate-400">Bloquea tu cuenta temporalmente o de forma indefinida.</p>
         </div>
-        <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">Medida extrema</span>
+        <span class="rounded-full bg-red-500/10 px-3 py-1 text-xs font-bold text-red-300">Medida extrema</span>
       </div>
 
       <form method="post" class="mt-6 space-y-4">
@@ -113,21 +115,21 @@
         <input type="hidden" name="action" value="self_exclusion">
 
         <div>
-          <label class="text-sm font-semibold text-slate-700" for="exclusion-type">Periodo de exclusión</label>
+          <label class="text-sm font-semibold text-slate-200" for="exclusion-type">Periodo de exclusión</label>
           <select id="exclusion-type" name="exclusion_type"
-                  class="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-rose-500">
+                  class="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-red-400">
             {% for value,label in exclusion_types %}
               <option value="{{ value }}">{{ label }}</option>
             {% endfor %}
           </select>
         </div>
 
-        <label class="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-          <input type="checkbox" name="confirm" class="mt-1 h-4 w-4 accent-rose-600">
+        <label class="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+          <input type="checkbox" name="confirm" class="mt-1 h-4 w-4 accent-red-500">
           <span>Confirmo mi autoexclusión. Entiendo que no podré apostar durante el período seleccionado.</span>
         </label>
 
-        <button class="w-full rounded-2xl bg-rose-600 px-4 py-3 text-sm font-bold text-white hover:bg-rose-700">
+        <button class="w-full rounded-2xl bg-red-500 px-4 py-3 text-sm font-black text-white hover:bg-red-400">
           Autoexcluirme ahora
         </button>
       </form>

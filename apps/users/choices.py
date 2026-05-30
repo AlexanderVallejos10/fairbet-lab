@@ -1,12 +1,10 @@
 from django.db import models
 
-
 class AccountStatus(models.TextChoices):
     PENDIENTE_VERIFICACION = 'pendiente_verificacion', 'Pendiente de verificación'
     VERIFICADO = 'verificado', 'Verificado'
     BLOQUEADO = 'bloqueado', 'Bloqueado'
     AUTOEXCLUIDO = 'autoexcluido', 'Autoexcluido'
-
 
 class ExclusionType(models.TextChoices):
     TEMPORAL_7 = '7_dias', '7 días'

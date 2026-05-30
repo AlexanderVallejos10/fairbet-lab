@@ -1,303 +1,415 @@
 {% extends "base.html" %}
-
+{% block title %}Eventos | La Fija Inka{% endblock %}
 {% block content %}
 {% csrf_token %}
-<div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-  <section class="space-y-8">
-    <header class="rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-8 text-white shadow-2xl">
-      <div class="flex flex-wrap items-start justify-between gap-6">
-        <div class="max-w-2xl">
-          <p class="text-xs font-bold uppercase tracking-[0.35em] text-emerald-400">FairBet Lab</p>
-          <h1 class="mt-3 text-4xl font-black tracking-tight">Eventos disponibles</h1>
-          <p class="mt-4 text-sm text-slate-300">
-            Cuotas dinámicas, apuestas simples y combinadas, cashout y control de riesgo.
-          </p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">
-          <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
-          <span class="ml-2 font-semibold">Actualización en tiempo real</span>
-        </div>
+<div class="space-y-6">
+  <section class="rounded-[2rem] border border-white/10 bg-[linear-gradient(160deg,rgba(18,26,46,.96),rgba(10,15,29,.96))] p-4 shadow-2xl">
+    <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div>
+        <p class="text-[10px] font-black uppercase tracking-[0.45em] text-emerald-400">La Fija Inka</p>
+        <h1 class="mt-2 text-3xl font-black text-white">Eventos disponibles</h1>
       </div>
-    </header>
-
-    {% if user.is_staff or user.is_superuser %}
-    <section class="rounded-[2rem] border border-emerald-200 bg-white p-6 shadow-lg">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[0.28em] text-emerald-700">Operador</p>
-          <h2 class="mt-2 text-2xl font-black text-slate-950">Gestión rápida</h2>
-          <p class="mt-2 text-sm text-slate-500">Accesos para crear y editar eventos desde el rol administrativo.</p>
-        </div>
-        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Solo staff</span>
+      <div class="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
+        <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+        Actualización en tiempo real
       </div>
-
-      <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <a href="/admin/betting/event/add/" class="rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-bold text-white hover:bg-emerald-700">
-          Crear evento
-        </a>
-        <a href="/admin/betting/event/" class="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">
-          Editar eventos
-        </a>
-        <a href="/admin/betting/market/add/" class="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">
-          Crear mercado
-        </a>
-        <a href="/admin/betting/selection/add/" class="rounded-2xl border border-slate-300 px-4 py-3 text-center text-sm font-bold text-slate-700 hover:bg-slate-50">
-          Crear selección
-        </a>
-      </div>
-    </section>
-    {% endif %}
-
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-black text-slate-950">En vivo</h2>
-          <p class="text-sm text-slate-500">Mercados abiertos con recotización controlada.</p>
-        </div>
-        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-          <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
-          LIVE
-        </span>
-      </div>
-
-      {% if live_events %}
-        <div class="grid gap-5">
-          {% for event in live_events %}
-            <article class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg" data-event-id="{{ event.id }}">
-              <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="text-lg font-black text-slate-950">{{ event.name }}</h3>
-                    <span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">EN VIVO</span>
-                  </div>
-                  <p class="mt-1 text-xs font-bold uppercase tracking-[0.28em] text-slate-500">{{ event.sport|upper }}</p>
-                  <p class="mt-2 text-sm text-slate-500">Comenzó <span class="event-time" data-started="{{ event.starts_at }}"></span></p>
-                </div>
-                <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                  Mercados activos
-                </div>
-              </div>
-
-              {% for market in event.markets.all %}
-                <div class="mt-4 rounded-2xl bg-slate-50 p-4">
-                  <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p class="text-sm font-bold text-slate-950">{{ market.name }}</p>
-                      <p class="text-xs text-slate-500">Mercado {{ market.status }}</p>
-                    </div>
-
-                    {% if market.status == "abierto" %}
-                      <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Abierto</span>
-                    {% elif market.status == "suspendido" %}
-                      <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">Suspendido</span>
-                    {% else %}
-                      <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">Cerrado</span>
-                    {% endif %}
-                  </div>
-
-                  <div class="mt-4 grid gap-2 sm:grid-cols-3">
-                    {% for selection in market.selections.all %}
-                      {% if market.status == "abierto" %}
-                        <div
-                          class="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-900 transition hover:border-emerald-600"
-                          data-selection-id="{{ selection.id }}"
-                          data-market-id="{{ market.id }}"
-                          data-market-name="{{ market.name }}"
-                          data-selection-name="{{ selection.name }}"
-                          data-odds="{{ selection.odds }}"
-                        >
-                          <a href="{% url 'web-bet' selection.id %}" class="flex-1 truncate hover:text-emerald-700">
-                            {{ selection.name }}
-                          </a>
-
-                          <div class="flex items-center gap-1">
-                            <span class="odds-value rounded-full bg-slate-100 px-2 py-1 text-xs font-black text-slate-900">{{ selection.odds }}</span>
-                            <button type="button" class="acc-add rounded-full p-1 text-slate-400 hover:bg-emerald-50 hover:text-emerald-700" title="Agregar a combinada">
-                              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      {% else %}
-                        <div class="flex items-center justify-between rounded-2xl border border-dashed border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-500">
-                          <span class="truncate">{{ selection.name }}</span>
-                          <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-black">{{ selection.odds }}</span>
-                        </div>
-                      {% endif %}
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endfor %}
-            </article>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="rounded-[2rem] border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
-          No hay eventos en vivo en este momento.
-        </div>
-      {% endif %}
     </div>
-
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-2xl font-black text-slate-950">Próximamente</h2>
-          <p class="text-sm text-slate-500">Programados con cuotas listas para apostar.</p>
-        </div>
-        <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Programados</span>
-      </div>
-
-      {% if programmed_events %}
-        <div class="grid gap-5">
-          {% for event in programmed_events %}
-            <article class="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-lg" data-event-id="{{ event.id }}">
-              <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h3 class="text-lg font-black text-slate-950">{{ event.name }}</h3>
-                  <p class="mt-1 text-xs font-bold uppercase tracking-[0.28em] text-slate-500">{{ event.sport|upper }}</p>
-                  <p class="mt-2 text-sm text-slate-500">Comienza <span class="event-start" data-time="{{ event.starts_at }}"></span></p>
-                </div>
-                <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">Mercados listos</div>
-              </div>
-
-              {% for market in event.markets.all %}
-                <div class="mt-4 rounded-2xl bg-slate-50 p-4">
-                  <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p class="text-sm font-bold text-slate-950">{{ market.name }}</p>
-                      <p class="text-xs text-slate-500">Mercado {{ market.status }}</p>
-                    </div>
-
-                    {% if market.status == "abierto" %}
-                      <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Abierto</span>
-                    {% elif market.status == "suspendido" %}
-                      <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">Suspendido</span>
-                    {% else %}
-                      <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">Cerrado</span>
-                    {% endif %}
-                  </div>
-
-                  <div class="mt-4 grid gap-2 sm:grid-cols-3">
-                    {% for selection in market.selections.all %}
-                      {% if market.status == "abierto" %}
-                        <div
-                          class="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-900 transition hover:border-emerald-600"
-                          data-selection-id="{{ selection.id }}"
-                          data-market-id="{{ market.id }}"
-                          data-market-name="{{ market.name }}"
-                          data-selection-name="{{ selection.name }}"
-                          data-odds="{{ selection.odds }}"
-                        >
-                          <a href="{% url 'web-bet' selection.id %}" class="flex-1 truncate hover:text-emerald-700">
-                            {{ selection.name }}
-                          </a>
-                          <div class="flex items-center gap-1">
-                            <span class="odds-value rounded-full bg-slate-100 px-2 py-1 text-xs font-black text-slate-900">{{ selection.odds }}</span>
-                            <button type="button" class="acc-add rounded-full p-1 text-slate-400 hover:bg-emerald-50 hover:text-emerald-700" title="Agregar a combinada">
-                              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      {% else %}
-                        <div class="flex items-center justify-between rounded-2xl border border-dashed border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-500">
-                          <span class="truncate">{{ selection.name }}</span>
-                          <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-black">{{ selection.odds }}</span>
-                        </div>
-                      {% endif %}
-                    {% endfor %}
-                  </div>
-                </div>
-              {% endfor %}
-            </article>
-          {% endfor %}
-        </div>
-      {% else %}
-        <div class="rounded-[2rem] border border-dashed border-slate-200 bg-white p-10 text-center text-sm text-slate-500 shadow-sm">
-          No hay eventos programados.
-        </div>
-      {% endif %}
+    <div class="mt-4 flex gap-3 overflow-x-auto pb-1 scrollbar-hide" id="filters">
+      <button type="button" class="filter-chip rounded-full px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10" data-filter="all">Todos</button>
+      <button type="button" class="filter-chip rounded-full px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10" data-filter="live">En juego</button>
+      <button type="button" class="filter-chip rounded-full px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10" data-filter="futbol">Fútbol</button>
+      <button type="button" class="filter-chip rounded-full px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10" data-filter="basquet">Básquet</button>
+      <button type="button" class="filter-chip rounded-full px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10" data-filter="voley">Vóley</button>
+      <button type="button" class="filter-chip rounded-full px-4 py-2 text-sm font-bold text-slate-200 hover:bg-white/10" data-filter="programados">Programados</button>
     </div>
   </section>
 
-  <aside class="hidden lg:block">
-    <div class="sticky top-24 space-y-4">
-      <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg">
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <section class="space-y-6">
+      {% if not user.is_authenticated %}
+      <div class="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
+        <article class="soft-panel rounded-[2rem] p-6">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="max-w-xl">
+              <p class="text-xs font-black uppercase tracking-[0.4em] text-emerald-400">Bono de bienvenida</p>
+              <h2 class="mt-3 text-3xl font-black text-white">Empieza con saldo virtual</h2>
+              <p class="mt-3 text-sm text-slate-300">
+                Regístrate y recibe tu bono inicial para probar apuestas simples, combinadas y cashout.
+              </p>
+              <div class="mt-5 flex flex-wrap gap-3">
+                <a href="{% url 'web-login' %}" class="rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-black text-black hover:bg-yellow-300">
+                  Iniciar sesión
+                </a>
+                <a href="{% url 'web-register' %}" class="rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold text-white hover:bg-white/5">
+                  Registrarme
+                </a>
+              </div>
+            </div>
+            <div class="hidden md:block rounded-[1.6rem] bg-[radial-gradient(circle_at_top_right,rgba(24,184,154,.25),transparent_40%),linear-gradient(180deg,rgba(13,20,35,.9),rgba(13,20,35,.96))] p-6 min-w-[280px] border border-white/10">
+              <p class="text-xs font-black uppercase tracking-[0.35em] text-slate-400">Bono activo</p>
+              <div class="mt-5 rounded-2xl bg-white/5 p-4">
+                <p class="text-sm text-slate-300">Saldo de prueba</p>
+                <p class="mt-2 text-2xl font-black text-white">50.0000</p>
+                <div class="mt-4 flex items-center gap-2">
+                  <span class="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-slate-200">1</span>
+                  <span class="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-slate-200">X</span>
+                  <span class="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-slate-200">2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <aside class="soft-panel rounded-[2rem] p-5">
+          <p class="text-[10px] font-black uppercase tracking-[0.45em] text-slate-400">Noticias</p>
+          <div class="mt-4 space-y-3">
+            <div class="rounded-2xl bg-white/5 p-4">
+              <p class="text-sm font-bold text-white">Mercados dinámicos</p>
+              <p class="mt-1 text-sm text-slate-400">Cuotas con recotización controlada.</p>
+            </div>
+            <div class="rounded-2xl bg-white/5 p-4">
+              <p class="text-sm font-bold text-white">Apuesta combinada</p>
+              <p class="mt-1 text-sm text-slate-400">Arma tu boleto desde el botón +.</p>
+            </div>
+          </div>
+        </aside>
+      </div>
+      {% else %}
+      <div class="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
+        <article class="soft-panel rounded-[2rem] p-6">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="max-w-xl">
+              <p class="text-xs font-black uppercase tracking-[0.4em] text-emerald-400">Cuenta activa</p>
+              <h2 class="mt-3 text-3xl font-black text-white">
+                Bienvenido, {% firstof user.first_name user.email %}
+              </h2>
+              <p class="mt-3 text-sm text-slate-300">
+                Tu bono ya fue acreditado una sola vez y tu saldo está listo para apostar.
+              </p>
+              <div class="mt-5 flex flex-wrap gap-3">
+                <a href="{% url 'web-wallet' %}" class="rounded-2xl bg-yellow-400 px-4 py-3 text-sm font-black text-black hover:bg-yellow-300">
+                  Ir a cartera
+                </a>
+                <a href="{% url 'web-historial' %}" class="rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold text-white hover:bg-white/5">
+                  Ver historial
+                </a>
+              </div>
+            </div>
+            <div class="hidden md:block rounded-[1.6rem] bg-[radial-gradient(circle_at_top_right,rgba(24,184,154,.25),transparent_40%),linear-gradient(180deg,rgba(13,20,35,.9),rgba(13,20,35,.96))] p-6 min-w-[280px] border border-white/10">
+              <p class="text-xs font-black uppercase tracking-[0.35em] text-slate-400">Saldo actual</p>
+              <div class="mt-5 rounded-2xl bg-white/5 p-4">
+                <p class="text-sm text-slate-300">Disponible</p>
+                <p class="mt-2 text-2xl font-black text-white">{% if wallet_balance %}{{ wallet_balance }}{% else %}0.0000{% endif %}</p>
+                <p class="mt-2 text-xs text-slate-400">
+                  {% if user.welcome_bonus_granted %}
+                    Bono de bienvenida acreditado
+                  {% else %}
+                    Bono pendiente
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <aside class="soft-panel rounded-[2rem] p-5">
+          <p class="text-[10px] font-black uppercase tracking-[0.45em] text-slate-400">Acceso rápido</p>
+          <div class="mt-4 space-y-3">
+            <a href="{% url 'web-wallet' %}" class="block rounded-2xl bg-white/5 p-4 hover:bg-white/10">
+              <p class="text-sm font-bold text-white">Cartera</p>
+              <p class="mt-1 text-sm text-slate-400">Revisar saldo y movimientos.</p>
+            </a>
+            <a href="{% url 'web-historial' %}" class="block rounded-2xl bg-white/5 p-4 hover:bg-white/10">
+              <p class="text-sm font-bold text-white">Historial</p>
+              <p class="mt-1 text-sm text-slate-400">Ver apuestas simples y combinadas.</p>
+            </a>
+          </div>
+        </aside>
+      </div>
+      {% endif %}
+
+      {% if user.is_staff or user.is_superuser %}
+      <section class="rounded-[2rem] border border-emerald-200/20 bg-white p-6 shadow-2xl text-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="text-xs font-black uppercase tracking-[0.35em] text-emerald-700">Operador</p>
+            <h2 class="mt-2 text-2xl font-black">Liquidación rápida</h2>
+            <p class="mt-2 text-sm text-slate-500">Selecciona un evento y el resultado ganador para cerrar apuestas.</p>
+          </div>
+          <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">Solo staff</span>
+        </div>
+
+        <form id="liquidate-form" class="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
+          <div>
+            <label class="text-sm font-semibold text-slate-700" for="event-id-select">Evento</label>
+            <select id="event-id-select" class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm">
+              <option value="">Selecciona un evento</option>
+              {% for event in events_for_operator %}
+                <option value="{{ event.id }}">{{ event.name }} · {{ event.get_sport_display }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-semibold text-slate-700" for="winner-select">Resultado ganador</label>
+            <select id="winner-select" class="mt-2 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm">
+              <option value="">Primero elige un evento</option>
+            </select>
+          </div>
+
+          <div class="flex items-end">
+            <button
+              type="submit"
+              class="w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-black text-white hover:bg-emerald-700"
+            >
+              Liquidar evento
+            </button>
+          </div>
+        </form>
+
+        <p id="liquidate-msg" class="mt-4 hidden rounded-2xl px-4 py-3 text-sm"></p>
+      </section>
+      {% endif %}
+
+      <section id="event-list" class="space-y-6">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-black text-white">En juego</h2>
+            <p class="text-sm text-slate-400">Mercados abiertos con cuotas activas.</p>
+          </div>
+          <span class="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            LIVE
+          </span>
+        </div>
+        {% if live_events %}
+          <div class="space-y-4">
+            {% for event in live_events %}
+              <article class="glass rounded-[2rem] p-5 event-card" data-event-id="{{ event.id }}" data-sport="{{ event.sport|lower }}" data-state="live">
+                <div class="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
+                  <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-300">En vivo</span>
+                      <h3 class="text-lg font-black text-white">{{ event.name }}</h3>
+                    </div>
+                    <p class="mt-2 text-xs font-black uppercase tracking-[0.3em] text-slate-400">{{ event.sport|upper }}</p>
+                    <p class="mt-2 text-sm text-slate-400">Comenzó <span class="event-time" data-started="{{ event.starts_at|date:'U' }}"></span></p>
+                  </div>
+                  <div class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-300">
+                    Mercados activos
+                  </div>
+                </div>
+                {% for market in event.markets.all %}
+                  <div class="mt-4 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-black text-white">{{ market.name }}</p>
+                        <p class="text-xs text-slate-400">Mercado {{ market.status }}</p>
+                      </div>
+                      {% if market.status == "abierto" %}
+                        <span class="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">Abierto</span>
+                      {% elif market.status == "suspendido" %}
+                        <span class="rounded-full bg-slate-200/10 px-3 py-1 text-xs font-black text-slate-300">Suspendido</span>
+                      {% else %}
+                        <span class="rounded-full bg-slate-200/10 px-3 py-1 text-xs font-black text-slate-300">Cerrado</span>
+                      {% endif %}
+                    </div>
+                    <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                      {% for selection in market.selections.all %}
+                        {% if market.status == "abierto" %}
+                          <div
+                            class="group flex items-center justify-between rounded-2xl border border-white/10 bg-[#0f1628] px-3 py-3 text-sm font-semibold text-white transition hover:border-yellow-400/40"
+                            data-selection-id="{{ selection.id }}"
+                            data-market-id="{{ market.id }}"
+                            data-market-name="{{ market.name }}"
+                            data-selection-name="{{ selection.name }}"
+                            data-odds="{{ selection.odds }}"
+                          >
+                            <a href="{% url 'web-bet' selection.id %}" class="flex-1 truncate hover:text-yellow-400">
+                              {{ selection.name }}
+                            </a>
+                            <div class="flex items-center gap-1">
+                              <span class="odds-value rounded-full bg-white/5 px-2 py-1 text-xs font-black text-white">{{ selection.odds }}</span>
+                              <button type="button" class="acc-add rounded-full p-1 text-slate-400 hover:bg-emerald-400/10 hover:text-emerald-300" title="Agregar a combinada">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        {% else %}
+                          <div class="flex items-center justify-between rounded-2xl border border-dashed border-white/10 bg-[#0f1628] px-3 py-3 text-sm font-semibold text-slate-400">
+                            <span class="truncate">{{ selection.name }}</span>
+                            <span class="rounded-full bg-white/5 px-2 py-1 text-xs font-black text-slate-300">{{ selection.odds }}</span>
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="glass rounded-[2rem] p-8 text-center text-sm text-slate-400">
+            No hay eventos en vivo en este momento.
+          </div>
+        {% endif %}
+      </section>
+
+      <section id="programados" class="space-y-4">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-black text-white">Programados</h2>
+            <p class="text-sm text-slate-400">Eventos listos para apostar.</p>
+          </div>
+          <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-300">
+            Próximos
+          </span>
+        </div>
+        {% if programmed_events %}
+          <div class="space-y-4">
+            {% for event in programmed_events %}
+              <article class="glass rounded-[2rem] p-5 event-card" data-event-id="{{ event.id }}" data-sport="{{ event.sport|lower }}" data-state="programado">
+                <div class="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-4">
+                  <div>
+                    <h3 class="text-lg font-black text-white">{{ event.name }}</h3>
+                    <p class="mt-1 text-xs font-black uppercase tracking-[0.3em] text-slate-400">{{ event.sport|upper }}</p>
+                    <p class="mt-2 text-sm text-slate-400">Comienza <span class="event-start" data-time="{{ event.starts_at|date:'U' }}"></span></p>
+                  </div>
+                  <div class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-slate-300">
+                    Mercados listos
+                  </div>
+                </div>
+                {% for market in event.markets.all %}
+                  <div class="mt-4 rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-black text-white">{{ market.name }}</p>
+                        <p class="text-xs text-slate-400">Mercado {{ market.status }}</p>
+                      </div>
+                      {% if market.status == "abierto" %}
+                        <span class="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">Abierto</span>
+                      {% elif market.status == "suspendido" %}
+                        <span class="rounded-full bg-slate-200/10 px-3 py-1 text-xs font-black text-slate-300">Suspendido</span>
+                      {% else %}
+                        <span class="rounded-full bg-slate-200/10 px-3 py-1 text-xs font-black text-slate-300">Cerrado</span>
+                      {% endif %}
+                    </div>
+                    <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                      {% for selection in market.selections.all %}
+                        {% if market.status == "abierto" %}
+                          <div
+                            class="group flex items-center justify-between rounded-2xl border border-white/10 bg-[#0f1628] px-3 py-3 text-sm font-semibold text-white transition hover:border-yellow-400/40"
+                            data-selection-id="{{ selection.id }}"
+                            data-market-id="{{ market.id }}"
+                            data-market-name="{{ market.name }}"
+                            data-selection-name="{{ selection.name }}"
+                            data-odds="{{ selection.odds }}"
+                          >
+                            <a href="{% url 'web-bet' selection.id %}" class="flex-1 truncate hover:text-yellow-400">
+                              {{ selection.name }}
+                            </a>
+                            <div class="flex items-center gap-1">
+                              <span class="odds-value rounded-full bg-white/5 px-2 py-1 text-xs font-black text-white">{{ selection.odds }}</span>
+                              <button type="button" class="acc-add rounded-full p-1 text-slate-400 hover:bg-emerald-400/10 hover:text-emerald-300" title="Agregar a combinada">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        {% else %}
+                          <div class="flex items-center justify-between rounded-2xl border border-dashed border-white/10 bg-[#0f1628] px-3 py-3 text-sm font-semibold text-slate-400">
+                            <span class="truncate">{{ selection.name }}</span>
+                            <span class="rounded-full bg-white/5 px-2 py-1 text-xs font-black text-slate-300">{{ selection.odds }}</span>
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="glass rounded-[2rem] p-8 text-center text-sm text-slate-400">
+            No hay eventos programados.
+          </div>
+        {% endif %}
+      </section>
+    </section>
+
+    <aside class="space-y-4">
+      <div class="soft-panel rounded-[2rem] p-5">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.28em] text-slate-500">Bet slip</p>
-            <h3 class="mt-2 text-lg font-black text-slate-950">Combinada</h3>
+            <p class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">Bet slip</p>
+            <h3 class="mt-2 text-2xl font-black text-white">Combinada</h3>
           </div>
-          <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600" id="acc-count">0</span>
+          <span class="rounded-full bg-white/5 px-2.5 py-1 text-xs font-black text-slate-300" id="acc-count">0</span>
         </div>
-
         <div id="acc-picks" class="mt-4 space-y-2">
-          <p class="text-sm text-slate-500">Selecciona cuotas con el botón + para armar tu combinada.</p>
+          <p class="text-sm text-slate-400">Selecciona cuotas con el botón + para armar tu combinada.</p>
         </div>
-
         <div id="acc-meta" class="mt-4 hidden space-y-4">
-          <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm">
-            <span class="text-slate-500">Cuota combinada</span>
-            <span class="font-black text-slate-950" id="acc-combined-odds">0.0000</span>
+          <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm">
+            <span class="text-slate-400">Cuota combinada</span>
+            <span class="font-black text-white" id="acc-combined-odds">0.0000</span>
           </div>
-
           <div>
-            <label for="acc-stake" class="text-sm font-semibold text-slate-700">Monto</label>
-            <div class="mt-2 flex items-center rounded-2xl border border-slate-200 px-4 py-3">
+            <label for="acc-stake" class="text-sm font-semibold text-slate-200">Monto</label>
+            <div class="mt-2 flex items-center rounded-2xl border border-white/10 bg-[#0f1628] px-4 py-3">
               <input type="number" id="acc-stake" step="0.0001" min="0.0001" placeholder="0.0000"
-                class="w-full border-0 bg-transparent text-lg font-bold text-slate-950 focus:outline-none">
+                class="w-full border-0 bg-transparent text-lg font-black text-white focus:outline-none">
             </div>
             <div class="mt-2 flex gap-2">
-              <button type="button" class="acc-preset flex-1 rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50" data-value="10">10</button>
-              <button type="button" class="acc-preset flex-1 rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50" data-value="25">25</button>
-              <button type="button" class="acc-preset flex-1 rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50" data-value="50">50</button>
-              <button type="button" class="acc-preset flex-1 rounded-xl border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50" data-value="100">100</button>
+              <button type="button" class="acc-preset flex-1 rounded-xl border border-white/10 px-2 py-1 text-xs font-bold text-slate-300 hover:bg-white/5" data-value="10">10</button>
+              <button type="button" class="acc-preset flex-1 rounded-xl border border-white/10 px-2 py-1 text-xs font-bold text-slate-300 hover:bg-white/5" data-value="25">25</button>
+              <button type="button" class="acc-preset flex-1 rounded-xl border border-white/10 px-2 py-1 text-xs font-bold text-slate-300 hover:bg-white/5" data-value="50">50</button>
+              <button type="button" class="acc-preset flex-1 rounded-xl border border-white/10 px-2 py-1 text-xs font-bold text-slate-300 hover:bg-white/5" data-value="100">100</button>
             </div>
           </div>
-
-          <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm">
-            <span class="text-slate-500">Pago potencial</span>
-            <span class="font-black text-emerald-600" id="acc-payout">0.0000</span>
+          <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm">
+            <span class="text-slate-400">Pago potencial</span>
+            <span class="font-black text-emerald-300" id="acc-payout">0.0000</span>
           </div>
-
-          <button type="button" id="acc-submit" class="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50" disabled>
+          <button type="button" id="acc-submit"
+            class="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-black text-white hover:bg-emerald-700 disabled:opacity-50"
+            disabled>
             Apostar combinada
           </button>
-
-          <p id="acc-error" class="hidden text-center text-xs text-rose-600"></p>
+          <p id="acc-error" class="hidden text-center text-xs text-red-300"></p>
         </div>
       </div>
 
-      <div class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-lg">
-        <p class="text-xs font-bold uppercase tracking-[0.28em] text-slate-500">Juego responsable</p>
-        <p class="mt-3 text-sm text-slate-600">
+      <div class="soft-panel rounded-[2rem] p-5">
+        <p class="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">Juego responsable</p>
+        <p class="mt-3 text-sm text-slate-300">
           Apuesta con límites claros. Puedes autoexcluirte desde tu perfil.
         </p>
-        <a href="{% url 'web-perfil' %}" class="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-700 hover:text-emerald-900">
+        <a href="{% url 'web-perfil' %}" class="mt-4 inline-flex items-center gap-2 text-sm font-black text-emerald-300 hover:text-emerald-200">
           Configurar límites →
         </a>
       </div>
-    </div>
-  </aside>
+    </aside>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function formatTime(date) {
-  const now = new Date();
-  const d = new Date(date);
-  const diff = Math.floor((d - now) / 1000);
-
+function formatTimeFromUnix(unixSeconds) {
+  if (unixSeconds === null || unixSeconds === undefined || unixSeconds === '') return 'Sin fecha';
+  const ts = Number(unixSeconds);
+  if (Number.isNaN(ts)) return 'Sin fecha';
+  const d = new Date(ts * 1000);
+  if (Number.isNaN(d.getTime())) return 'Sin fecha';
+  const now = Date.now();
+  const diff = Math.floor((d.getTime() - now) / 1000);
   if (diff < 0) {
     const ago = Math.floor(-diff / 60);
     if (ago < 60) return `hace ${ago}m`;
-    const hours = Math.floor(ago / 60);
-    return `hace ${hours}h`;
+    return `hace ${Math.floor(ago / 60)}h`;
   }
-
   if (diff < 60) return 'en segundos';
   if (diff < 3600) return `en ${Math.floor(diff / 60)}m`;
   if (diff < 86400) return `en ${Math.floor(diff / 3600)}h`;
@@ -306,14 +418,16 @@ function formatTime(date) {
 
 document.querySelectorAll('.event-time').forEach((el) => {
   const started = el.dataset.started;
-  el.textContent = formatTime(started);
-  setInterval(() => { el.textContent = formatTime(started); }, 30000);
+  const update = () => { el.textContent = formatTimeFromUnix(started); };
+  update();
+  setInterval(update, 30000);
 });
 
 document.querySelectorAll('.event-start').forEach((el) => {
   const time = el.dataset.time;
-  el.textContent = formatTime(time);
-  setInterval(() => { el.textContent = formatTime(time); }, 30000);
+  const update = () => { el.textContent = formatTimeFromUnix(time); };
+  update();
+  setInterval(update, 30000);
 });
 
 (function() {
@@ -321,19 +435,27 @@ document.querySelectorAll('.event-start').forEach((el) => {
   const eventIds = document.querySelectorAll('[data-event-id]');
   const pollingInterval = 5000;
 
+  function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : '';
+  }
+
   function updateOdds(eventId, data) {
     const eventEl = document.querySelector(`[data-event-id="${eventId}"]`);
     if (!eventEl) return;
-
     data.markets && Object.entries(data.markets).forEach(([, marketData]) => {
       marketData.selections.forEach((selection) => {
         const selEls = eventEl.querySelectorAll(`[data-selection-id="${selection.id}"]`);
         selEls.forEach((selEl) => {
           const oddsSpan = selEl.querySelector('.odds-value');
           if (oddsSpan && oddsSpan.textContent !== selection.odds) {
-            oddsSpan.classList.add('bg-amber-200');
+            oddsSpan.classList.add('bg-yellow-400');
+            oddsSpan.classList.add('text-black');
             oddsSpan.textContent = selection.odds;
-            setTimeout(() => { oddsSpan.classList.remove('bg-amber-200'); }, 400);
+            setTimeout(() => {
+              oddsSpan.classList.remove('bg-yellow-400');
+              oddsSpan.classList.remove('text-black');
+            }, 500);
           }
         });
       });
@@ -353,7 +475,6 @@ document.querySelectorAll('.event-start').forEach((el) => {
     const wsUrl = `${protocol}//${window.location.host}/ws/odds/event/${eventId}/`;
     try {
       const ws = new WebSocket(wsUrl);
-
       ws.onopen = () => {
         setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -361,7 +482,6 @@ document.querySelectorAll('.event-start').forEach((el) => {
           }
         }, 30000);
       };
-
       ws.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
@@ -372,7 +492,6 @@ document.querySelectorAll('.event-start').forEach((el) => {
           console.error('WebSocket message error:', err);
         }
       };
-
       ws.onerror = () => startPolling(eventId);
       ws.onclose = () => setTimeout(() => connectWebSocket(eventId), 5000);
     } catch (err) {
@@ -400,7 +519,7 @@ document.querySelectorAll('.event-start').forEach((el) => {
     countEl.textContent = keys.length;
 
     if (keys.length === 0) {
-      picksContainer.innerHTML = '<p class="text-sm text-slate-500">Selecciona cuotas con el botón + para armar tu combinada.</p>';
+      picksContainer.innerHTML = '<p class="text-sm text-slate-400">Selecciona cuotas con el botón + para armar tu combinada.</p>';
       metaContainer.classList.add('hidden');
       return;
     }
@@ -409,15 +528,14 @@ document.querySelectorAll('.event-start').forEach((el) => {
     picksContainer.innerHTML = keys.map((key) => {
       const p = picks[key];
       combinedOdds *= p.odds;
-
-      return `<div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2 text-sm">
+      return `<div class="flex items-center justify-between rounded-2xl bg-white/5 px-3 py-2 text-sm">
         <div>
-          <p class="font-bold text-slate-950">${p.selectionName}</p>
-          <p class="text-xs text-slate-500">${p.marketName}</p>
+          <p class="font-black text-white">${p.selectionName}</p>
+          <p class="text-xs text-slate-400">${p.marketName}</p>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-xs font-black text-slate-950">@${p.odds}</span>
-          <button type="button" class="acc-remove rounded-full p-1 text-rose-500 hover:bg-rose-50" data-key="${key}">
+          <span class="text-xs font-black text-white">@${p.odds}</span>
+          <button type="button" class="acc-remove rounded-full p-1 text-red-300 hover:bg-red-500/10" data-key="${key}">
             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
@@ -426,9 +544,7 @@ document.querySelectorAll('.event-start').forEach((el) => {
       </div>`;
     }).join('');
 
-    const roundedOdds = combinedOdds.toFixed(4);
-    oddsEl.textContent = roundedOdds;
-
+    oddsEl.textContent = combinedOdds.toFixed(4);
     const stake = parseFloat(stakeInput.value) || 0;
     payoutEl.textContent = (stake * combinedOdds).toFixed(4);
     submitBtn.disabled = keys.length < 2 || stake <= 0;
@@ -460,17 +576,15 @@ document.querySelectorAll('.event-start').forEach((el) => {
       const marketName = container.dataset.marketName;
       const selectionName = container.dataset.selectionName;
       const odds = container.dataset.odds;
-
       addPick(selectionId, marketId, marketName, selectionName, odds);
-
       if (picks[selectionId]) {
         btn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
-        btn.classList.add('text-rose-500', 'hover:bg-rose-50');
-        btn.classList.remove('text-slate-400', 'hover:bg-emerald-50', 'hover:text-emerald-700');
+        btn.classList.add('text-red-300', 'hover:bg-red-500/10');
+        btn.classList.remove('text-slate-400', 'hover:bg-emerald-400/10', 'hover:text-emerald-300');
       } else {
         btn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>';
-        btn.classList.remove('text-rose-500', 'hover:bg-rose-50');
-        btn.classList.add('text-slate-400', 'hover:bg-emerald-50', 'hover:text-emerald-700');
+        btn.classList.remove('text-red-300', 'hover:bg-red-500/10');
+        btn.classList.add('text-slate-400', 'hover:bg-emerald-400/10', 'hover:text-emerald-300');
       }
     });
   });
@@ -478,16 +592,14 @@ document.querySelectorAll('.event-start').forEach((el) => {
   picksContainer.addEventListener('click', (e) => {
     const removeBtn = e.target.closest('.acc-remove');
     if (!removeBtn) return;
-
     const key = removeBtn.dataset.key;
     delete picks[key];
     updateSlip();
-
     const btn = document.querySelector(`[data-selection-id="${key}"] .acc-add`);
     if (btn) {
       btn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>';
-      btn.classList.remove('text-rose-500', 'hover:bg-rose-50');
-      btn.classList.add('text-slate-400', 'hover:bg-emerald-50', 'hover:text-emerald-700');
+      btn.classList.remove('text-red-300', 'hover:bg-red-500/10');
+      btn.classList.add('text-slate-400', 'hover:bg-emerald-400/10', 'hover:text-emerald-300');
     }
   });
 
@@ -500,31 +612,22 @@ document.querySelectorAll('.event-start').forEach((el) => {
     });
   });
 
-  function getCookie(name) {
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    return match ? match[2] : '';
-  }
-
   submitBtn.addEventListener('click', async () => {
     const selectionIds = Object.keys(picks).map(id => parseInt(id));
     const stake = parseFloat(stakeInput.value) || 0;
-
     if (selectionIds.length < 2) {
       errorEl.textContent = 'Selecciona al menos 2 cuotas.';
       errorEl.classList.remove('hidden');
       return;
     }
-
     if (stake <= 0) {
       errorEl.textContent = 'Ingresa un monto válido.';
       errorEl.classList.remove('hidden');
       return;
     }
-
     submitBtn.disabled = true;
     submitBtn.textContent = 'Procesando...';
     errorEl.classList.add('hidden');
-
     try {
       const res = await fetch('/api/accumulated/', {
         method: 'POST',
@@ -535,12 +638,10 @@ document.querySelectorAll('.event-start').forEach((el) => {
         },
         body: JSON.stringify({ selections: selectionIds, stake }),
       });
-
       if (res.ok) {
         window.location.href = '/historial/';
         return;
       }
-
       const data = await res.json();
       if (data.detail) {
         errorEl.textContent = Array.isArray(data.detail) ? data.detail.join(', ') : data.detail;
@@ -554,10 +655,134 @@ document.querySelectorAll('.event-start').forEach((el) => {
       errorEl.textContent = 'Error de conexión.';
       errorEl.classList.remove('hidden');
     }
-
     submitBtn.disabled = false;
     submitBtn.textContent = 'Apostar combinada';
   });
+
+  function applyFilter(filter, shouldScroll = false) {
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+      const active = btn.dataset.filter === filter;
+      btn.classList.toggle('bg-white/10', active);
+      btn.classList.toggle('text-white', active);
+      btn.classList.toggle('text-slate-200', !active);
+    });
+    document.querySelectorAll('.event-card').forEach(card => {
+      const sport = (card.dataset.sport || '').toLowerCase();
+      const state = card.dataset.state;
+      let visible = true;
+      if (filter === 'live') {
+        visible = state === 'live';
+      } else if (filter === 'programados') {
+        visible = state === 'programado';
+      } else if (filter !== 'all') {
+        visible = sport === filter;
+      }
+      card.style.display = visible ? '' : 'none';
+    });
+    if (shouldScroll) {
+      const list = document.getElementById('event-list');
+      if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  document.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => applyFilter(btn.dataset.filter, true));
+  });
+
+  {% if user.is_staff or user.is_superuser %}
+  const eventSelect = document.getElementById('event-id-select');
+  const winnerSelect = document.getElementById('winner-select');
+  const form = document.getElementById('liquidate-form');
+  const msg = document.getElementById('liquidate-msg');
+
+  async function loadEventWinnerOptions(eventId) {
+    winnerSelect.innerHTML = '<option value="">Cargando...</option>';
+
+    if (!eventId) {
+      winnerSelect.innerHTML = '<option value="">Primero elige un evento</option>';
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/odds/`);
+      if (!res.ok) {
+        winnerSelect.innerHTML = '<option value="">No se pudo cargar</option>';
+        return;
+      }
+
+      const data = await res.json();
+      const names = new Set();
+
+      Object.values(data.markets || {}).forEach((market) => {
+        (market.selections || []).forEach((sel) => names.add(sel.name));
+      });
+
+      const options = Array.from(names).sort();
+
+      if (!options.length) {
+        winnerSelect.innerHTML = '<option value="">Sin selecciones</option>';
+        return;
+      }
+
+      winnerSelect.innerHTML = '<option value="">Selecciona el ganador</option>';
+      options.forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        winnerSelect.appendChild(opt);
+      });
+    } catch (err) {
+      winnerSelect.innerHTML = '<option value="">Error de carga</option>';
+    }
+  }
+
+  eventSelect.addEventListener('change', () => loadEventWinnerOptions(eventSelect.value));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const eventId = eventSelect.value;
+    const winner = winnerSelect.value;
+
+    if (!eventId || !winner) {
+      msg.className = 'mt-4 rounded-2xl px-4 py-3 text-sm bg-amber-50 text-amber-800';
+      msg.textContent = 'Selecciona un evento y un resultado ganador.';
+      msg.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/settle/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ result: winner }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        msg.className = 'mt-4 rounded-2xl px-4 py-3 text-sm bg-emerald-50 text-emerald-800';
+        msg.textContent = `Evento liquidado correctamente. Ganadas: ${data.settled_won} | Perdidas: ${data.settled_lost}`;
+        msg.classList.remove('hidden');
+        return;
+      }
+
+      msg.className = 'mt-4 rounded-2xl px-4 py-3 text-sm bg-rose-50 text-rose-800';
+      msg.textContent = data.detail || 'No se pudo liquidar el evento.';
+      msg.classList.remove('hidden');
+    } catch (err) {
+      msg.className = 'mt-4 rounded-2xl px-4 py-3 text-sm bg-rose-50 text-rose-800';
+      msg.textContent = 'Error de conexión.';
+      msg.classList.remove('hidden');
+    }
+  });
+  {% endif %}
+
+  applyFilter('all', false);
 })();
 </script>
 {% endblock %}

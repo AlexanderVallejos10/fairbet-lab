@@ -4,11 +4,9 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from apps.users.choices import AccountStatus, ExclusionType
 from apps.users.managers import UserManager
 from apps.users.validators import validate_dni, validate_mayoria_edad
-
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
@@ -66,6 +64,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         blank=True,
         verbose_name=_('última modificación de límites'),
     )
+    welcome_bonus_granted = models.BooleanField(
+        default=False,
+        verbose_name=_('bono de bienvenida otorgado'),
+    )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_('activo'),
@@ -96,7 +98,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
-
 
 class SelfExclusion(models.Model):
     user = models.ForeignKey(
@@ -131,7 +132,6 @@ class SelfExclusion(models.Model):
 
     def __str__(self):
         return f'{self.user.email} - {self.get_exclusion_type_display()}'
-
 
 class DepositLimitChange(models.Model):
     user = models.ForeignKey(

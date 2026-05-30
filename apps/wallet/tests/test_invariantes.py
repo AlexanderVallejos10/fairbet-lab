@@ -1,20 +1,13 @@
 import uuid
 from decimal import Decimal
-
 import pytest
 from django.contrib.auth import get_user_model
 from hypothesis import HealthCheck, given, settings as h_settings
 from hypothesis import strategies as st
-
 from apps.wallet.models import Account, AccountType, Direction, LedgerEntry
 from apps.wallet.services import deposit, get_balance, reserve_for_bet, settle_win
 
 User = get_user_model()
-
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def usuario(db):
@@ -27,13 +20,11 @@ def usuario(db):
         birth_date='1995-01-01',
     )
 
-
 @pytest.fixture
 def cuentas(usuario):
     wallet = Account.objects.create(user=usuario, type=AccountType.WALLET_USUARIO)
     casa, _ = Account.objects.get_or_create(user=None, type=AccountType.CASA)
     return wallet, casa
-
 
 @pytest.fixture
 def cuentas_hypothesis(db):

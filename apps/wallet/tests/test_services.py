@@ -1,10 +1,8 @@
 import threading
 import uuid
 from decimal import Decimal
-
 import pytest
 from django.contrib.auth import get_user_model
-
 from apps.users.choices import AccountStatus
 from apps.wallet.models import Account, AccountType
 from apps.wallet.services import (
@@ -21,10 +19,6 @@ from apps.wallet.services import (
 
 User = get_user_model()
 
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def usuario(db):

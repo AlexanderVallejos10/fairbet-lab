@@ -3,124 +3,146 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FairBet Lab</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>{% block title %}La Fija Inka{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --slate-50: #f8fafc;
-      --slate-100: #f1f5f9;
-      --slate-200: #e2e8f0;
-      --slate-900: #0f172a;
-      --slate-500: #64748b;
-      --brand-600: #0f766e;
-      --brand-700: #0f5f59;
-      --brand-900: #083f3a;
-      --live-600: #16a34a;
-      --danger-600: #dc2626;
+      --bg: #0b1020;
+      --bg-2: #0f1628;
+      --panel: #121a2e;
+      --panel-2: #161f38;
+      --line: rgba(255,255,255,.08);
+      --text: #f4f7ff;
+      --muted: #a1acc6;
+      --brand: #f5c842;
+      --brand-2: #18b89a;
+      --danger: #ef4444;
     }
     body {
-      font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(24,184,154,.13), transparent 22%),
+        radial-gradient(circle at top right, rgba(245,200,66,.08), transparent 24%),
+        linear-gradient(180deg, var(--bg) 0%, #0b1020 45%, #0e1528 100%);
+      color: var(--text);
     }
+    .glass {
+      background: rgba(18, 26, 46, .92);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--line);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .soft-panel {
+      background: linear-gradient(180deg, rgba(22,31,56,.95), rgba(16,23,42,.95));
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(0,0,0,.28);
+    }
+    .chip {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+    .scrollbar-hide::-webkit-scrollbar { width: 0; height: 0; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="min-h-screen bg-[var(--slate-50)] text-[var(--slate-900)]">
-  <nav class="sticky top-0 z-50 border-b border-[var(--slate-200)] bg-white/90 backdrop-blur">
-    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-      <a href="{% url 'web-home' %}" class="flex items-center gap-3">
-        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-600)] text-white">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2a9 9 0 019 9c0 4.97-4.03 9-9 9s-9-4.03-9-9a9 9 0 019-9zm0 4a5 5 0 100 10 5 5 0 000-10z"/>
-          </svg>
-        </span>
-        <div class="leading-tight">
-          <p class="text-sm font-semibold text-[var(--slate-500)]">Sportsbook educativo</p>
-          <p class="text-lg font-extrabold tracking-tight">FairBet Lab</p>
-        </div>
-      </a>
+<body class="min-h-screen text-slate-100">
+  <div class="flex min-h-screen">
 
-      <div class="hidden items-center gap-6 text-sm font-semibold sm:flex">
-        <a href="{% url 'web-home' %}" class="text-[var(--slate-500)] hover:text-[var(--slate-900)]">Eventos</a>
-        {% if user.is_authenticated %}
-          <a href="{% url 'web-wallet' %}" class="text-[var(--slate-500)] hover:text-[var(--slate-900)]">Cartera</a>
-          <a href="{% url 'web-historial' %}" class="text-[var(--slate-500)] hover:text-[var(--slate-900)]">Historial</a>
-          <a href="{% url 'web-perfil' %}" class="text-[var(--slate-500)] hover:text-[var(--slate-900)]">Juego responsable</a>
-          {% if user.is_staff %}
-            <a href="{% url 'web-dashboard' %}" class="text-[var(--slate-500)] hover:text-[var(--slate-900)]">Operador</a>
-          {% endif %}
-        {% else %}
-          <a href="{% url 'web-login' %}" class="text-[var(--slate-500)] hover:text-[var(--slate-900)]">Ingresar</a>
+    <aside class="hidden xl:flex w-[240px] flex-col border-r border-white/10 bg-[#0a0f1d]">
+      <div class="px-5 py-5 border-b border-white/10">
+        <div class="text-xs font-black uppercase tracking-[0.45em] text-yellow-400">Sistema de apuestas</div>
+        <div class="mt-2 text-3xl font-black leading-tight">La Fija Inka</div>
+      </div>
+
+      <div class="p-4 space-y-3 overflow-y-auto scrollbar-hide">
+        <a href="{% url 'web-home' %}" class="flex items-center gap-3 rounded-2xl bg-white/6 px-4 py-3 font-semibold hover:bg-white/10">
+          <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+          Eventos
+        </a>
+        <a href="{% url 'web-wallet' %}" class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold text-slate-200 hover:bg-white/6">
+          Cartera
+        </a>
+        <a href="{% url 'web-historial' %}" class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold text-slate-200 hover:bg-white/6">
+          Historial
+        </a>
+        <a href="{% url 'web-perfil' %}" class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold text-slate-200 hover:bg-white/6">
+          Juego responsable
+        </a>
+
+        {% if user.is_staff or user.is_superuser %}
+          <a href="{% url 'admin:index' %}" class="flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold text-slate-200 hover:bg-white/6">
+            Operador
+          </a>
         {% endif %}
       </div>
 
-      <div class="flex items-center gap-3">
-        {% if user.is_authenticated %}
-          <div class="hidden items-center gap-2 rounded-full border border-[var(--slate-200)] bg-white px-3 py-2 text-xs font-semibold text-[var(--slate-500)] sm:flex">
-            <span class="h-2 w-2 rounded-full bg-[var(--live-600)]"></span>
-            Saldo: <span class="text-[var(--slate-900)]">{{ navbar_balance|default:"0.0000" }}</span>
+      <div class="mt-auto p-4 border-t border-white/10">
+        <div class="soft-panel rounded-[1.4rem] p-4">
+          <p class="text-[11px] font-black uppercase tracking-[0.35em] text-slate-400">Saldo</p>
+          <div class="mt-2 flex items-center justify-between gap-3">
+            <span class="text-sm font-semibold text-slate-300">Disponible</span>
+            <span class="text-xl font-black text-white">
+              {% if wallet_balance %}{{ wallet_balance }}{% else %}0.0000{% endif %}
+            </span>
           </div>
-          <a href="{% url 'web-wallet' %}" class="hidden rounded-full bg-[var(--brand-600)] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[var(--brand-700)] sm:inline-flex">
+          <a href="{% url 'web-wallet' %}" class="mt-4 inline-flex rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-700">
             Depositar
           </a>
-          <a href="{% url 'web-logout' %}" class="rounded-full border border-[var(--slate-200)] px-4 py-2 text-xs font-semibold text-[var(--slate-500)] hover:text-[var(--slate-900)]">
-            Salir
-          </a>
-        {% else %}
-          <a href="{% url 'web-register' %}" class="rounded-full bg-[var(--brand-600)] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[var(--brand-700)]">
-            Crear cuenta
-          </a>
-        {% endif %}
+        </div>
       </div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+      <header class="sticky top-0 z-40 border-b border-white/10 bg-[#0b1020]/90 backdrop-blur-2xl">
+        <div class="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-4 lg:px-8">
+          <div class="flex items-center gap-3">
+            <div class="text-left">
+              <p class="text-[10px] font-black uppercase tracking-[0.45em] text-slate-400">La Fija Inka</p>
+            </div>
+          </div>
+
+          <nav class="hidden lg:flex flex-1 items-center justify-center gap-10 text-sm font-semibold text-slate-300">
+            <a href="{% url 'web-home' %}" class="hover:text-white">Eventos</a>
+            <a href="{% url 'web-wallet' %}" class="hover:text-white">Cartera</a>
+            <a href="{% url 'web-historial' %}" class="hover:text-white">Historial</a>
+            <a href="{% url 'web-perfil' %}" class="hover:text-white">Juego responsable</a>
+            {% if user.is_staff or user.is_superuser %}
+              <a href="{% url 'admin:index' %}" class="hover:text-white">Operador</a>
+            {% endif %}
+          </nav>
+
+          <div class="flex items-center gap-3">
+            <div class="hidden md:flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm">
+              <span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+              <span class="font-semibold text-slate-300">Saldo:</span>
+              <span class="font-black text-white">
+                {% if wallet_balance %}{{ wallet_balance }}{% else %}0.0000{% endif %}
+              </span>
+            </div>
+
+            <a href="{% url 'web-wallet' %}" class="rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white hover:bg-emerald-700">
+              Depositar
+            </a>
+
+            {% if user.is_authenticated %}
+              <a href="{% url 'web-logout' %}" class="rounded-2xl border border-white/10 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/5">
+                Salir
+              </a>
+            {% else %}
+              <a href="{% url 'web-login' %}" class="rounded-2xl border border-white/10 px-4 py-2.5 text-sm font-bold text-white hover:bg-white/5">
+                Iniciar sesión
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+
+      <main class="mx-auto max-w-[1600px] px-4 py-8 lg:px-8">
+        {% block content %}{% endblock %}
+      </main>
     </div>
-  </nav>
-
-  <main class="mx-auto min-h-[70vh] max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    {% for message in messages %}
-      <div class="mb-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">ℹ️</span>
-          <span>{{ message }}</span>
-        </div>
-      </div>
-    {% endfor %}
-
-    {% block content %}{% endblock %}
-  </main>
-
-  <footer class="border-t border-[var(--slate-200)] bg-white">
-    <div class="mx-auto max-w-7xl px-4 py-8 text-sm sm:px-6 lg:px-8">
-      <div class="grid gap-6 md:grid-cols-3">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--slate-500)]">FairBet Lab</p>
-          <p class="mt-2 text-sm text-[var(--slate-500)]">Plataforma educativa con moneda virtual. No constituye una casa de apuestas.</p>
-        </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--slate-500)]">Juego responsable</p>
-          <p class="mt-2 text-sm text-[var(--slate-500)]">+18. Participar con responsabilidad. Si sentís pérdida de control, activá la autoexclusión.</p>
-          <a href="{% url 'web-perfil' %}" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand-600)] hover:text-[var(--brand-900)]">
-            Autoexclusión y límites →
-          </a>
-        </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--slate-500)]">Avisos</p>
-          <ul class="mt-2 space-y-1 text-sm text-[var(--slate-500)]">
-            <li>Sin pasarelas de pago reales.</li>
-            <li>Fichas sin valor monetario.</li>
-            <li>Objetivo educativo y demostrativo.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="mt-6 flex flex-wrap items-center gap-3 text-xs text-[var(--slate-500)]">
-        <span class="rounded-full border border-[var(--slate-200)] px-2 py-1">Ley 31557</span>
-        <span class="rounded-full border border-[var(--slate-200)] px-2 py-1">DS 005-2023-MINCETUR</span>
-        <span class="rounded-full border border-[var(--slate-200)] px-2 py-1">Juego responsable</span>
-      </div>
-    </div>
-  </footer>
+  </div>
 
   {% block extra_js %}{% endblock %}
 </body>
 </html>
-

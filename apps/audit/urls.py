@@ -1,5 +1,4 @@
 from django.urls import path
-
 from apps.audit.views import AuditVerifyView, DashboardView, SuspiciousActivityListView
 
 urlpatterns = [

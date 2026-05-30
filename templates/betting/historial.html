@@ -157,7 +157,6 @@
     return match ? match[2] : '';
   }
 
-  // Cashout
   const modal = document.getElementById('cashout-modal');
   const stakeEl = document.getElementById('cashout-stake');
   const valueEl = document.getElementById('cashout-value');
@@ -228,7 +227,6 @@
     btn.textContent = 'Confirmar cashout';
   });
 
-  // Accumulated bets
   async function loadAccumulated() {
     const container = document.getElementById('accumulated-list');
     const countEl = document.getElementById('acc-count');
@@ -300,6 +298,7 @@
   }
 
   loadAccumulated();
+  setInterval(loadAccumulated, 10000);
 })();
 </script>
 {% endblock %}
